@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '@/entities/User';
-import { Box } from '@/entities/Box';
+import { BoxService } from '@/entities/Box';
 import { Feedback } from '@/entities/Feedback';
 import FeedbackFlow from '../components/FeedbackFlow';
 import CompletionBadge from '../components/CompletionBadge';
@@ -45,7 +45,7 @@ export default function FeedbackPage() {
       const user = await User.me();
       setCurrentUser(user);
 
-      const boxes = await Box.list('-created_at', 1);
+      const boxes = await BoxService.list('-created_at', 1);
       if (boxes.length > 0) {
         setCurrentBox(boxes[0]);
       } else {
