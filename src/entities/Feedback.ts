@@ -10,6 +10,20 @@ import type {
 export class Feedback {
   static async create(feedbackData: CompleteFeedbackData): Promise<{ success: boolean; sessionId?: string }> {
     try {
+      // Check if we're using placeholder URL (development mode)
+      if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
+        console.warn('Using placeholder Supabase URL - falling back to mock data');
+        // Simulate successful save for development
+        const mockSessionId = crypto.randomUUID();
+        console.log('Mock feedback saved:', {
+          sessionId: mockSessionId,
+          boxId: feedbackData.box_id,
+          userEmail: feedbackData.user_email,
+          productCount: feedbackData.product_feedbacks?.length || 0
+        });
+        return { success: true, sessionId: mockSessionId };
+      }
+
       return await withRetry(async () => {
         // Start a transaction-like operation
         const sessionId = crypto.randomUUID();

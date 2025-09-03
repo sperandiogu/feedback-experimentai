@@ -33,7 +33,7 @@ export default function CompletionBadge({ badge, onClose }: any) {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1, rotate: [0, -10, 10, -5, 5, 0] }}
-              transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
+              transition={{ delay: 0.3, type: "tween", duration: 0.6 }}
               className="w-24 h-24 mx-auto mb-6 rounded-full bg-purple-600 flex items-center justify-center shadow-lg"
             >
               <Trophy className="w-12 h-12 text-white" />
