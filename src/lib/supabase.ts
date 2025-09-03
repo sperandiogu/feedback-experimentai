@@ -1,7 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const getValidUrl = (envUrl: string | undefined, fallback: string): string => {
+  if (!envUrl) return fallback;
+  try {
+    new URL(envUrl);
+    return envUrl;
+  } catch {
+    return fallback;
+  }
+};
+
+const supabaseUrl = getValidUrl(import.meta.env.VITE_SUPABASE_URL, 'https://placeholder.supabase.co');
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
 // Validate URL format
