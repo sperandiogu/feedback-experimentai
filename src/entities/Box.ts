@@ -9,7 +9,13 @@ export class Box {
         const isDescending = sortBy.startsWith('-');
         const sortField = isDescending ? sortBy.substring(1) : sortBy;
         const sortOrder = isDescending ? 'desc' : 'asc';
+      // Check if we're using placeholder URL (development mode)
+      if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
+        console.warn('Using placeholder Supabase URL - falling back to mock data');
+        return this.getMockBoxes();
+      }
 
+      const result = await withRetry(async () => {
         const { data: boxes, error: boxesError } = await supabase
           .from('boxes')
           .select(`
@@ -24,12 +30,12 @@ export class Box {
 
         if (boxesError) {
           console.warn('Database error, using mock data:', boxesError);
-          return this.getMockBoxes();
+          throw new Error(`Database error: ${boxesError.message}`);
         }
 
         if (!boxes || boxes.length === 0) {
           console.warn('No boxes found, using mock data');
-          return this.getMockBoxes();
+          throw new Error('No boxes found');
         }
 
         // Transform the data to match expected structure
@@ -50,14 +56,16 @@ export class Box {
             price: bp.products_catalog.price,
             is_active: bp.products_catalog.is_active,
             created_at: bp.products_catalog.created_at,
-            updated_at: bp.products_catalog.updated_at
+      });
+
+      return result;
           }))
         }));
 
         return transformedBoxes;
       });
     } catch (error) {
-      console.error('Error fetching boxes:', error);
+      console.warn('Failed to fetch boxes from database, using mock data:', error);
       return this.getMockBoxes();
     }
   }
