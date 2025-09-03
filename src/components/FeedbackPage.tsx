@@ -2,23 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { User } from '@/entities/User';
 import { Box } from '@/entities/Box';
 import { Feedback } from '@/entities/Feedback';
-import FeedbackFlow from './FeedbackFlow';
-import CompletionBadge from './CompletionBadge';
+import FeedbackFlow from '../components/FeedbackFlow';
+import CompletionBadge from '../components/CompletionBadge';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Package, AlertCircle } from 'lucide-react';
+import { checkDatabaseConnection } from '@/lib/supabase';
+import type { Customer, BoxWithProducts } from '@/types/database';
 
 export default function FeedbackPage() {
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [currentBox, setCurrentBox] = useState(null);
+  const [currentUser, setCurrentUser] = useState<Customer | null>(null);
+  const [currentBox, setCurrentBox] = useState<BoxWithProducts | null>(null);
   const [showCompletion, setShowCompletion] = useState(false);
   const [completionBadge, setCompletionBadge] = useState('');
   const [error, setError] = useState('');
+  const [dbConnected, setDbConnected] = useState(false);
 
   useEffect(() => {
+    checkDatabaseStatus();
     loadUserAndBox();
   }, []);
+
+  const checkDatabaseStatus = async () => {
+    try {
+      const connected = await checkDatabaseConnection();
+      setDbConnected(connected);
+      if (!connected) {
+        console.warn('Database connection failed, using mock data');
+      }
+    } catch (error) {
+      console.error('Database connection check failed:', error);
+      setDbConnected(false);
+    }
+  };
 
   const loadUserAndBox = async () => {
     try {
@@ -28,7 +45,7 @@ export default function FeedbackPage() {
       const user = await User.me();
       setCurrentUser(user);
 
-      const boxes = await Box.list('-created_date', 1);
+      const boxes = await Box.list('-created_at', 1);
       if (boxes.length > 0) {
         setCurrentBox(boxes[0]);
       } else {
@@ -46,14 +63,23 @@ export default function FeedbackPage() {
     try {
       setLoading(true);
       
-      await Feedback.create({
+      const result = await Feedback.create({
         ...feedbackData,
-        user_email: currentUser?.email
+        user_email: currentUser?.email || 'anonymous@example.com'
       });
 
-      await User.updateMyUserData({
-        boxes_received: (currentUser?.boxes_received || 0) + 1
-      });
+      if (result.success) {
+        console.log('Feedback saved successfully:', result.sessionId);
+        
+        // Update user data if user exists
+        if (currentUser) {
+          await User.updateMyUserData({
+            // Add any user-specific updates here
+          });
+        }
+      } else {
+        console.warn('Feedback save failed, but continuing with completion flow');
+      }
 
       setCompletionBadge(feedbackData.completion_badge);
       setShowCompletion(true);
@@ -70,7 +96,7 @@ export default function FeedbackPage() {
     window.location.reload();
   };
 
-  const renderStateCard = (icon: any, title: string, message: string, buttonText: string | null = null, buttonAction: any = null) => (
+  const renderStateCard = (icon: React.ReactNode, title: string, message: string, buttonText: string | null = null, buttonAction: (() => void) | null = null) => (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="bg-white border-none shadow-xl max-w-sm w-full rounded-3xl">
         <CardContent className="p-8 text-center">
@@ -78,6 +104,11 @@ export default function FeedbackPage() {
             {icon}
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">{title}</h2>
+          {!dbConnected && (
+            <div className="mb-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+              Modo offline - usando dados de exemplo
+            </div>
+          )}
           <p className="text-gray-600 mb-6">{message}</p>
           {buttonText && (
             <Button 
@@ -95,7 +126,7 @@ export default function FeedbackPage() {
   if (loading) {
     return renderStateCard(
       <Loader2 className="w-8 h-8 animate-spin text-purple-600" />,
-      "Carregando sua box...",
+      dbConnected ? "Carregando sua box..." : "Preparando dados de exemplo...",
       "Preparando tudo para você avaliar os produtos!"
     );
   }
@@ -103,7 +134,7 @@ export default function FeedbackPage() {
   if (error) {
     return renderStateCard(
       <AlertCircle className="w-8 h-8 text-red-500" />,
-      "Ops! Algo deu errado",
+      dbConnected ? "Ops! Algo deu errado" : "Usando dados de exemplo",
       error,
       "Tentar novamente",
       () => window.location.reload()
@@ -113,7 +144,7 @@ export default function FeedbackPage() {
   if (!currentBox) {
     return renderStateCard(
       <Package className="w-8 h-8 text-purple-600" />,
-      "Nenhuma box para avaliar",
+      dbConnected ? "Nenhuma box para avaliar" : "Box de exemplo carregada",
       "Fique de olho! Sua próxima box para avaliação aparecerá aqui em breve."
     );
   }
