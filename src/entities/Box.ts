@@ -1,7 +1,7 @@
 import { supabase, withRetry } from '@/lib/supabase';
 import type { BoxWithProducts, Box, ProductsCatalog } from '@/types/database';
 
-export class Box {
+export class BoxService {
   static async list(sortBy: string = '-created_at', limit: number = 10): Promise<BoxWithProducts[]> {
     try {
       return await withRetry(async () => {
@@ -9,60 +9,62 @@ export class Box {
         const isDescending = sortBy.startsWith('-');
         const sortField = isDescending ? sortBy.substring(1) : sortBy;
         const sortOrder = isDescending ? 'desc' : 'asc';
-      // Check if we're using placeholder URL (development mode)
-      if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
-        console.warn('Using placeholder Supabase URL - falling back to mock data');
-        return this.getMockBoxes();
-      }
-
-      const result = await withRetry(async () => {
-        const { data: boxes, error: boxesError } = await supabase
-          .from('boxes')
-          .select(`
-            *,
-            box_products!inner(
-              quantity,
-              products_catalog!inner(*)
-            )
-          `)
-          .order(sortField, { ascending: !isDescending })
-          .limit(limit);
-
-        if (boxesError) {
-          console.warn('Database error, using mock data:', boxesError);
-          throw new Error(`Database error: ${boxesError.message}`);
+      
+        // Check if we're using placeholder URL (development mode)
+        if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
+          console.warn('Using placeholder Supabase URL - falling back to mock data');
+          return this.getMockBoxes();
         }
 
-        if (!boxes || boxes.length === 0) {
-          console.warn('No boxes found, using mock data');
-          throw new Error('No boxes found');
-        }
+        const result = await withRetry(async () => {
+          const { data: boxes, error: boxesError } = await supabase
+            .from('boxes')
+            .select(`
+              *,
+              box_products!inner(
+                quantity,
+                products_catalog!inner(*)
+              )
+            `)
+            .order(sortField, { ascending: !isDescending })
+            .limit(limit);
 
-        // Transform the data to match expected structure
-        const transformedBoxes: BoxWithProducts[] = boxes.map(box => ({
-          id: box.id,
-          theme: box.theme,
-          description: box.description,
-          created_at: box.created_at,
-          updated_at: box.updated_at,
-          products: box.box_products.map((bp: any) => ({
-            id: bp.products_catalog.id,
-            name: bp.products_catalog.name,
-            brand: bp.products_catalog.brand,
-            category: bp.products_catalog.category,
-            description: bp.products_catalog.description,
-            image_url: bp.products_catalog.image_url,
-            sku: bp.products_catalog.sku,
-            price: bp.products_catalog.price,
-            is_active: bp.products_catalog.is_active,
-            created_at: bp.products_catalog.created_at,
-      });
+          if (boxesError) {
+            console.warn('Database error, using mock data:', boxesError);
+            throw new Error(`Database error: ${boxesError.message}`);
+          }
 
-      return result;
-          }))
-        }));
+          if (!boxes || boxes.length === 0) {
+            console.warn('No boxes found, using mock data');
+            throw new Error('No boxes found');
+          }
 
-        return transformedBoxes;
+          // Transform the data to match expected structure
+          const transformedBoxes: BoxWithProducts[] = boxes.map(box => ({
+            id: box.id,
+            theme: box.theme,
+            description: box.description,
+            created_at: box.created_at,
+            updated_at: box.updated_at,
+            products: box.box_products.map((bp: any) => ({
+              id: bp.products_catalog.id,
+              name: bp.products_catalog.name,
+              brand: bp.products_catalog.brand,
+              category: bp.products_catalog.category,
+              description: bp.products_catalog.description,
+              image_url: bp.products_catalog.image_url,
+              sku: bp.products_catalog.sku,
+              price: bp.products_catalog.price,
+              is_active: bp.products_catalog.is_active,
+              created_at: bp.products_catalog.created_at,
+              updated_at: bp.products_catalog.updated_at
+            }))
+          }));
+
+          return transformedBoxes;
+        });
+
+        return result;
       });
     } catch (error) {
       console.warn('Failed to fetch boxes from database, using mock data:', error);
@@ -189,6 +191,7 @@ export class Box {
         theme: 'Sabores do Verão',
         description: 'Uma seleção especial de produtos refrescantes para o verão',
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         products: [
           {
             id: 'mock-product-1',
@@ -196,8 +199,12 @@ export class Box {
             brand: 'AçaíMax',
             category: 'Sobremesas',
             description: 'Açaí cremoso e natural',
+            image_url: null,
+            sku: null,
+            price: null,
             is_active: true,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: 'mock-product-2',
@@ -205,8 +212,12 @@ export class Box {
             brand: 'Coco Fresh',
             category: 'Bebidas',
             description: 'Água de coco 100% natural',
+            image_url: null,
+            sku: null,
+            price: null,
             is_active: true,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: 'mock-product-3',
@@ -214,8 +225,12 @@ export class Box {
             brand: 'VitaLife',
             category: 'Snacks',
             description: 'Biscoito integral com fibras',
+            image_url: null,
+            sku: null,
+            price: null,
             is_active: true,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           }
         ]
       }
