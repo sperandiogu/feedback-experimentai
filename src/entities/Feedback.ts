@@ -1,4 +1,5 @@
 import { supabase, withRetry } from '@/lib/supabase';
+import { User } from './User';
 import type { 
   CompleteFeedbackData, 
   FeedbackSession, 
@@ -10,6 +11,9 @@ import type {
 export class Feedback {
   static async create(feedbackData: CompleteFeedbackData): Promise<{ success: boolean; sessionId?: string }> {
     try {
+      // Try to get current user session for proper authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
       // Check if we're using placeholder URL (development mode)
       if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
         console.warn('Using placeholder Supabase URL - falling back to mock data');
@@ -28,13 +32,34 @@ export class Feedback {
         // Start a transaction-like operation
         const sessionId = crypto.randomUUID();
         
+        // Get user info for proper RLS context
+        let userEmail = feedbackData.user_email;
+        let customerId = null;
+        
+        // If we have an authenticated session, use that email
+        if (session?.user?.email) {
+          userEmail = session.user.email;
+        }
+        
+        // Try to get customer info if user exists
+        try {
+          const customer = await User.me();
+          if (customer) {
+            customerId = customer.customer_id;
+            userEmail = customer.email;
+          }
+        } catch (error) {
+          console.log('No customer found, proceeding with anonymous feedback');
+        }
+        
         // 1. Create feedback session
         const { data: session, error: sessionError } = await supabase
           .from('feedback_sessions')
           .insert({
             id: sessionId,
+            customer_id: customerId,
             box_id: feedbackData.box_id,
-            user_email: feedbackData.user_email,
+            user_email: userEmail,
             session_status: 'completed',
             completion_badge: feedbackData.completion_badge,
             final_message: feedbackData.final_message,
@@ -46,6 +71,13 @@ export class Feedback {
 
         if (sessionError) {
           console.error('Error creating feedback session:', sessionError);
+          
+          // If RLS error, provide more helpful error message
+          if (sessionError.code === '42501') {
+            console.error('RLS Policy Error: The database security policy is preventing this operation.');
+            console.error('This usually means the user needs to be authenticated or the RLS policy needs to be updated.');
+          }
+          
           throw sessionError;
         }
 
