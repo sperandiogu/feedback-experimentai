@@ -20,6 +20,7 @@ export interface QuestionOption {
 export interface Question {
   id: string;
   category_id: string;
+  product_id?: string;
   question_text: string;
   question_type: 'rating' | 'multiple_choice' | 'text' | 'boolean' | 'emoji_rating';
   is_required: boolean;
@@ -110,6 +111,7 @@ export class QuestionsService {
           `)
           .eq('question_categories.name', categoryName)
           .eq('is_active', true)
+          .is('product_id', null) // Only get global questions for this method
           .order('order_index');
 
         if (error) {
@@ -119,6 +121,7 @@ export class QuestionsService {
         return questions.map((question: any) => ({
           id: question.id,
           category_id: question.category_id,
+          product_id: question.product_id,
           question_text: question.question_text,
           question_type: question.question_type,
           is_required: question.is_required,
@@ -143,6 +146,54 @@ export class QuestionsService {
     }
   }
 
+  static async getQuestionsByCategoryAndProduct(categoryName: string, productId?: string): Promise<Question[]> {
+    try {
+      return await withRetry(async () => {
+        // Get global questions (product_id is null) and product-specific questions
+        const { data: questions, error } = await supabase
+          .from('questions')
+          .select(`
+            *,
+            question_options(*),
+            question_categories!inner(name)
+          `)
+          .eq('question_categories.name', categoryName)
+          .eq('is_active', true)
+          .or(`product_id.is.null,product_id.eq.${productId || 'null'}`)
+          .order('order_index');
+
+        if (error) {
+          throw error;
+        }
+
+        return questions.map((question: any) => ({
+          id: question.id,
+          category_id: question.category_id,
+          product_id: question.product_id,
+          question_text: question.question_text,
+          question_type: question.question_type,
+          is_required: question.is_required,
+          order_index: question.order_index,
+          config: question.config || {},
+          is_active: question.is_active,
+          options: question.question_options
+            ?.filter((opt: any) => opt.is_active)
+            ?.sort((a: any, b: any) => a.order_index - b.order_index)
+            ?.map((option: any) => ({
+              id: option.id,
+              option_value: option.option_value,
+              option_label: option.option_label,
+              option_icon: option.option_icon,
+              order_index: option.order_index
+            })) || []
+        }));
+      });
+    } catch (error) {
+      console.error('Error fetching questions by category and product:', error);
+      return [];
+    }
+  }
+
   static async getQuestionById(questionId: string): Promise<Question | null> {
     try {
       return await withRetry(async () => {
@@ -163,6 +214,7 @@ export class QuestionsService {
         return {
           id: question.id,
           category_id: question.category_id,
+          product_id: question.product_id,
           question_text: question.question_text,
           question_type: question.question_type,
           is_required: question.is_required,
