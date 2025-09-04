@@ -5,16 +5,14 @@ export class User {
   static async me(): Promise<Customer | null> {
     try {
       return await withRetry(async () => {
-        // Try to get authenticated user first
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError) {
-          console.warn('No authenticated user, using mock data');
-          return this.getMockUser();
+          console.warn('No authenticated user found');
+          return null;
         }
 
         if (user?.email) {
-          // Get customer data from database
           const { data, error } = await supabase
             .from('customer')
             .select('*')
@@ -23,7 +21,7 @@ export class User {
 
           if (error) {
             if (error.code === 'PGRST116') {
-              // User not found, create new customer record
+              // User not found in customer table, create new record
               return await this.createCustomerFromAuth(user);
             }
             throw error;
@@ -32,11 +30,11 @@ export class User {
           return data;
         }
 
-        return this.getMockUser();
+        return null;
       });
     } catch (error) {
       console.error('Error fetching user:', error);
-      return this.getMockUser();
+      return null;
     }
   }
 
@@ -130,14 +128,5 @@ export class User {
         average_satisfaction: 0
       };
     }
-  }
-
-  private static getMockUser(): Customer {
-    return {
-      customer_id: 'mock-user-id',
-      email: 'user@example.com',
-      name: 'Test User',
-      created_at: new Date().toISOString()
-    };
   }
 }

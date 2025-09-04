@@ -11,37 +11,18 @@ import type {
 export class Feedback {
   static async create(feedbackData: CompleteFeedbackData): Promise<{ success: boolean; sessionId?: string }> {
     try {
-      // Try to get current user session for proper authentication
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Check if we're using placeholder URL (development mode)
-      if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
-        console.warn('Using placeholder Supabase URL - falling back to mock data');
-        // Simulate successful save for development
-        const mockSessionId = crypto.randomUUID();
-        console.log('Mock feedback saved:', {
-          sessionId: mockSessionId,
-          boxId: feedbackData.box_id,
-          userEmail: feedbackData.user_email,
-          productCount: feedbackData.product_feedbacks?.length || 0
-        });
-        return { success: true, sessionId: mockSessionId };
-      }
-
       return await withRetry(async () => {
-        // Start a transaction-like operation
         const sessionId = crypto.randomUUID();
         
-        // Get user info for proper RLS context
         let userEmail = feedbackData.user_email;
         let customerId = null;
         
-        // If we have an authenticated session, use that email
         if (session?.user?.email) {
           userEmail = session.user.email;
         }
         
-        // Try to get customer info if user exists
         try {
           const customer = await User.me();
           if (customer) {
@@ -52,7 +33,6 @@ export class Feedback {
           console.log('No customer found, proceeding with anonymous feedback');
         }
         
-        // 1. Create feedback session
         const { data: insertedSessionData, error: sessionError } = await supabase
           .from('feedback_sessions')
           .insert({
@@ -71,17 +51,11 @@ export class Feedback {
 
         if (sessionError) {
           console.error('Error creating feedback session:', sessionError);
-          
-          // If RLS error, provide more helpful error message
-          if (sessionError.code === '42501') {
-            console.error('RLS Policy Error: The database security policy is preventing this operation.');
-            console.error('This usually means the user needs to be authenticated or the RLS policy needs to be updated.');
-          }
-          
           throw sessionError;
         }
 
-        // 2. Create product feedback entries
+        console.log('Feedback session created:', insertedSessionData);
+
         if (feedbackData.product_feedbacks && feedbackData.product_feedbacks.length > 0) {
           const productFeedbackData = feedbackData.product_feedbacks.map(pf => ({
             feedback_session_id: sessionId,
@@ -103,7 +77,7 @@ export class Feedback {
           }
         }
 
-        // 3. Create Experimentaí feedback
+        // Create Experimentaí feedback
         if (feedbackData.experimentai_feedback) {
           const { error: experimentaiError } = await supabase
             .from('experimentai_feedback')
@@ -122,7 +96,7 @@ export class Feedback {
           }
         }
 
-        // 4. Create delivery feedback
+        // Create delivery feedback
         if (feedbackData.delivery_feedback) {
           const { error: deliveryError } = await supabase
             .from('delivery_feedback')
@@ -140,25 +114,13 @@ export class Feedback {
           }
         }
 
-        console.log('Feedback successfully saved to database:', {
-          sessionId,
-          editionId: feedbackData.edition_id,
-          userEmail: feedbackData.user_email,
-          productCount: feedbackData.product_feedbacks?.length || 0
-        });
+        console.log('Feedback successfully saved to database');
 
         return { success: true, sessionId };
       });
     } catch (error) {
       console.error('Error saving feedback:', error);
-      
-      // Fallback: log to console for development
-      console.log('Feedback data (fallback logging):', {
-        timestamp: new Date().toISOString(),
-        ...feedbackData
-      });
-      
-      return { success: false };
+      throw error;
     }
   }
 

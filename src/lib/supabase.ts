@@ -1,34 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration
-const getValidUrl = (envUrl: string | undefined, fallback: string): string => {
-  if (!envUrl) return fallback;
+const getValidUrl = (envUrl: string | undefined): string => {
+  if (!envUrl) {
+    throw new Error('VITE_SUPABASE_URL environment variable is required');
+  }
   try {
     new URL(envUrl);
     return envUrl;
   } catch {
-    return fallback;
+    throw new Error('Invalid VITE_SUPABASE_URL format');
   }
 };
 
-const supabaseUrl = getValidUrl(import.meta.env.VITE_SUPABASE_URL, 'https://placeholder.supabase.co');
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+const supabaseUrl = getValidUrl(import.meta.env.VITE_SUPABASE_URL);
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Validate URL format
-const isValidUrl = (url: string): boolean => {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-if (!supabaseUrl || !supabaseAnonKey || !isValidUrl(supabaseUrl)) {
-  console.warn('Invalid or missing Supabase environment variables. Using placeholder values for development.');
+if (!supabaseAnonKey) {
+  throw new Error('VITE_SUPABASE_ANON_KEY environment variable is required');
 }
 
-// Create Supabase client with connection pooling
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -45,7 +36,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Database connection health check
+// Database connection health check (for diagnostics only)
 export const checkDatabaseConnection = async (): Promise<boolean> => {
   try {
     const { data, error } = await supabase
@@ -65,7 +56,7 @@ export const checkDatabaseConnection = async (): Promise<boolean> => {
   }
 };
 
-// Connection retry mechanism
+// Connection retry mechanism for transient failures
 export const withRetry = async <T>(
   operation: () => Promise<T>,
   maxRetries: number = 3,

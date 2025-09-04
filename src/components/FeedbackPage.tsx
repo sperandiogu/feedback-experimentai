@@ -17,43 +17,43 @@ export default function FeedbackPage() {
   const [showCompletion, setShowCompletion] = useState(false);
   const [completionBadge, setCompletionBadge] = useState('');
   const [error, setError] = useState('');
-  const [dbConnected, setDbConnected] = useState(false);
+  const [dbConnected, setDbConnected] = useState(true);
 
   useEffect(() => {
-    checkDatabaseStatus();
     loadUserAndEdition();
   }, []);
-
-  const checkDatabaseStatus = async () => {
-    try {
-      const connected = await checkDatabaseConnection();
-      setDbConnected(connected);
-      if (!connected) {
-        console.warn('Database connection failed, using mock data');
-      }
-    } catch (error) {
-      console.error('Database connection check failed:', error);
-      setDbConnected(false);
-    }
-  };
 
   const loadUserAndEdition = async () => {
     try {
       setLoading(true);
       setError('');
       
-      const user = await User.me();
-      setCurrentUser(user);
+      try {
+        const user = await User.me();
+        setCurrentUser(user);
+      } catch (error) {
+        console.warn('Could not load user, proceeding with anonymous session');
+        setCurrentUser(null);
+      }
 
-      const editions = await EditionService.list('-created_at', 1);
-      if (editions.length > 0) {
-        setCurrentEdition(editions[0]);
-      } else {
-        setError('Nenhuma edição encontrada para avaliação no momento.');
+      try {
+        const editions = await EditionService.list('-created_at', 1);
+        if (editions.length > 0) {
+          setCurrentEdition(editions[0]);
+          setDbConnected(true);
+        } else {
+          setError('Nenhuma edição encontrada para avaliação no momento.');
+          setDbConnected(false);
+        }
+      } catch (error) {
+        console.error('Error loading editions:', error);
+        setError('Erro ao carregar edições. Verifique sua conexão com o banco de dados.');
+        setDbConnected(false);
       }
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
       setError('Erro ao carregar seus dados. Por favor, tente novamente.');
+      setDbConnected(false);
     } finally {
       setLoading(false);
     }
@@ -63,23 +63,30 @@ export default function FeedbackPage() {
     try {
       setLoading(true);
       
-      const result = await Feedback.create({
-        ...feedbackData,
-        user_email: currentUser?.email || 'anonymous@example.com',
-        edition_id: currentEdition?.edition_id
-      });
+      try {
+        const result = await Feedback.create({
+          ...feedbackData,
+          user_email: currentUser?.email || 'anonymous@example.com',
+          edition_id: currentEdition?.edition_id
+        });
 
-      if (result.success) {
-        console.log('Feedback saved successfully:', result.sessionId);
-        
-        // Update user data if user exists
-        if (currentUser) {
-          await User.updateMyUserData({
-            // Add any user-specific updates here
-          });
+        if (result.success) {
+          console.log('Feedback saved successfully:', result.sessionId);
+          
+          // Update user data if user exists
+          if (currentUser) {
+            try {
+              await User.updateMyUserData({});
+            } catch (updateError) {
+              console.warn('Could not update user data:', updateError);
+            }
+          }
         }
-      } else {
-        console.warn('Feedback save failed, but continuing with completion flow');
+      } catch (saveError) {
+        console.error('Error saving feedback:', saveError);
+        setError('Erro ao salvar feedback. Tente novamente.');
+        setLoading(false);
+        return;
       }
 
       setCompletionBadge(feedbackData.completion_badge);
@@ -105,11 +112,6 @@ export default function FeedbackPage() {
             {icon}
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">{title}</h2>
-          {!dbConnected && (
-            <div className="mb-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
-              Modo offline - usando dados de exemplo
-            </div>
-          )}
           <p className="text-gray-600 mb-6">{message}</p>
           {buttonText && (
             <Button 
@@ -127,7 +129,7 @@ export default function FeedbackPage() {
   if (loading) {
     return renderStateCard(
       <Loader2 className="w-8 h-8 animate-spin text-purple-600" />,
-      dbConnected ? "Carregando sua box..." : "Preparando dados de exemplo...",
+      "Carregando sua edição...",
       "Preparando tudo para você avaliar os produtos!"
     );
   }
@@ -135,7 +137,7 @@ export default function FeedbackPage() {
   if (error) {
     return renderStateCard(
       <AlertCircle className="w-8 h-8 text-red-500" />,
-      dbConnected ? "Ops! Algo deu errado" : "Usando dados de exemplo",
+      "Ops! Algo deu errado",
       error,
       "Tentar novamente",
       () => window.location.reload()
@@ -145,7 +147,7 @@ export default function FeedbackPage() {
   if (!currentEdition) {
     return renderStateCard(
       <Package className="w-8 h-8 text-purple-600" />,
-      dbConnected ? "Nenhuma edição para avaliar" : "Edição de exemplo carregada",
+      "Nenhuma edição para avaliar",
       "Fique de olho! Sua próxima edição para avaliação aparecerá aqui em breve."
     );
   }

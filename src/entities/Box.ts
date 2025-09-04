@@ -5,64 +5,50 @@ export class EditionService {
   static async list(sortBy: string = '-created_at', limit: number = 10): Promise<EditionWithProducts[]> {
     try {
       return await withRetry(async () => {
-        // Parse sort parameter
         const isDescending = sortBy.startsWith('-');
         const sortField = isDescending ? sortBy.substring(1) : sortBy;
-        const sortOrder = isDescending ? 'desc' : 'asc';
-      
-        // Check if we're using placeholder URL (development mode)
-        if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
-          console.warn('Using placeholder Supabase URL - falling back to mock data');
-          return this.getMockEditions();
+
+        const { data: editions, error: editionsError } = await supabase
+          .from('edition')
+          .select(`
+            *,
+            product_edition!inner(
+              products!inner(*)
+            )
+          `)
+          .order(sortField, { ascending: !isDescending })
+          .limit(limit);
+
+        if (editionsError) {
+          throw new Error(`Database error: ${editionsError.message}`);
         }
 
-        const result = await withRetry(async () => {
-          const { data: editions, error: editionsError } = await supabase
-            .from('edition')
-            .select(`
-              *,
-              product_edition!inner(
-                products!inner(*)
-              )
-            `)
-            .order(sortField, { ascending: !isDescending })
-            .limit(limit);
+        if (!editions || editions.length === 0) {
+          throw new Error('No editions found in database');
+        }
 
-          if (editionsError) {
-            console.warn('Database error, using mock data:', editionsError);
-            throw new Error(`Database error: ${editionsError.message}`);
-          }
+        // Transform the data to match expected structure
+        const transformedEditions: EditionWithProducts[] = editions.map(edition => ({
+          edition_id: edition.edition_id,
+          edition: edition.edition,
+          created_at: edition.created_at,
+          updated_at: edition.updated_at,
+          products: edition.product_edition.map((pe: any) => ({
+            id: pe.products.id,
+            name: pe.products.name,
+            brand: pe.products.brand,
+            category: pe.products.category,
+            description: pe.products.description,
+            image_url: pe.products.image_url,
+            created_at: pe.products.created_at
+          }))
+        }));
 
-          if (!editions || editions.length === 0) {
-            console.warn('No editions found, using mock data');
-            throw new Error('No editions found');
-          }
-
-          // Transform the data to match expected structure
-          const transformedEditions: EditionWithProducts[] = editions.map(edition => ({
-            edition_id: edition.edition_id,
-            edition: edition.edition,
-            created_at: edition.created_at,
-            updated_at: edition.updated_at,
-            products: edition.product_edition.map((pe: any) => ({
-              id: pe.products.id,
-              name: pe.products.name,
-              brand: pe.products.brand,
-              category: pe.products.category,
-              description: pe.products.description,
-              image_url: pe.products.image_url,
-              created_at: pe.products.created_at
-            }))
-          }));
-
-          return transformedEditions;
-        });
-
-        return result;
+        return transformedEditions;
       });
     } catch (error) {
-      console.warn('Failed to fetch editions from database, using mock data:', error);
-      return this.getMockEditions();
+      console.error('Failed to fetch editions from database:', error);
+      throw error;
     }
   }
 
@@ -174,45 +160,5 @@ export class EditionService {
     const validNumbers = numbers.filter(n => n != null && !isNaN(n));
     if (validNumbers.length === 0) return 0;
     return Math.round((validNumbers.reduce((sum, n) => sum + n, 0) / validNumbers.length) * 100) / 100;
-  }
-
-  private static getMockEditions(): EditionWithProducts[] {
-    return [
-      {
-        edition_id: 'mock-edition-1',
-        edition: 'Sabores do Verão',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        products: [
-          {
-            id: 'mock-product-1',
-            name: 'Açaí Premium Bowl',
-            brand: 'AçaíMax',
-            category: 'Sobremesas',
-            description: 'Açaí cremoso e natural',
-            image_url: null,
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 'mock-product-2',
-            name: 'Água de Coco Natural',
-            brand: 'Coco Fresh',
-            category: 'Bebidas',
-            description: 'Água de coco 100% natural',
-            image_url: null,
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 'mock-product-3',
-            name: 'Biscoito Integral',
-            brand: 'VitaLife',
-            category: 'Snacks',
-            description: 'Biscoito integral com fibras',
-            image_url: null,
-            created_at: new Date().toISOString()
-          }
-        ]
-      }
-    ];
   }
 }
