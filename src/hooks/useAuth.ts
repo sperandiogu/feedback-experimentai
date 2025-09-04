@@ -17,6 +17,13 @@ export const useAuth = () => {
       } catch (err) {
         console.error('Auth state change error:', err);
         setError('Erro ao verificar autenticação');
+      } finally {
+        setLoading(false);
+      }
     });
+
+    return () => unsubscribe();
   }, []);
+
+  return { user, isAuthorized, loading, error };
 };
