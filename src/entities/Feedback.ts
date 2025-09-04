@@ -58,7 +58,7 @@ export class Feedback {
           .insert({
             id: sessionId,
             customer_id: customerId,
-            box_id: feedbackData.box_id,
+            edition_id: feedbackData.edition_id,
             user_email: userEmail,
             session_status: 'completed',
             completion_badge: feedbackData.completion_badge,
@@ -142,7 +142,7 @@ export class Feedback {
 
         console.log('Feedback successfully saved to database:', {
           sessionId,
-          boxId: feedbackData.box_id,
+          editionId: feedbackData.edition_id,
           userEmail: feedbackData.user_email,
           productCount: feedbackData.product_feedbacks?.length || 0
         });

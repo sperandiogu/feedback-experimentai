@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '@/entities/User';
-import { BoxService } from '@/entities/Box';
+import { EditionService } from '@/entities/Box';
 import { Feedback } from '@/entities/Feedback';
 import FeedbackFlow from '../components/FeedbackFlow';
 import CompletionBadge from '../components/CompletionBadge';
@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Package, AlertCircle } from 'lucide-react';
 import { checkDatabaseConnection } from '@/lib/supabase';
-import type { Customer, BoxWithProducts } from '@/types/database';
+import type { Customer, EditionWithProducts } from '@/types/database';
 
 export default function FeedbackPage() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Customer | null>(null);
-  const [currentBox, setCurrentBox] = useState<BoxWithProducts | null>(null);
+  const [currentEdition, setCurrentEdition] = useState<EditionWithProducts | null>(null);
   const [showCompletion, setShowCompletion] = useState(false);
   const [completionBadge, setCompletionBadge] = useState('');
   const [error, setError] = useState('');
@@ -21,7 +21,7 @@ export default function FeedbackPage() {
 
   useEffect(() => {
     checkDatabaseStatus();
-    loadUserAndBox();
+    loadUserAndEdition();
   }, []);
 
   const checkDatabaseStatus = async () => {
@@ -37,7 +37,7 @@ export default function FeedbackPage() {
     }
   };
 
-  const loadUserAndBox = async () => {
+  const loadUserAndEdition = async () => {
     try {
       setLoading(true);
       setError('');
@@ -45,11 +45,11 @@ export default function FeedbackPage() {
       const user = await User.me();
       setCurrentUser(user);
 
-      const boxes = await BoxService.list('-created_at', 1);
-      if (boxes.length > 0) {
-        setCurrentBox(boxes[0]);
+      const editions = await EditionService.list('-created_at', 1);
+      if (editions.length > 0) {
+        setCurrentEdition(editions[0]);
       } else {
-        setError('Nenhuma box encontrada para avaliação no momento.');
+        setError('Nenhuma edição encontrada para avaliação no momento.');
       }
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
@@ -65,7 +65,8 @@ export default function FeedbackPage() {
       
       const result = await Feedback.create({
         ...feedbackData,
-        user_email: currentUser?.email || 'anonymous@example.com'
+        user_email: currentUser?.email || 'anonymous@example.com',
+        edition_id: currentEdition?.edition_id
       });
 
       if (result.success) {
@@ -141,18 +142,18 @@ export default function FeedbackPage() {
     );
   }
 
-  if (!currentBox) {
+  if (!currentEdition) {
     return renderStateCard(
       <Package className="w-8 h-8 text-purple-600" />,
-      dbConnected ? "Nenhuma box para avaliar" : "Box de exemplo carregada",
-      "Fique de olho! Sua próxima box para avaliação aparecerá aqui em breve."
+      dbConnected ? "Nenhuma edição para avaliar" : "Edição de exemplo carregada",
+      "Fique de olho! Sua próxima edição para avaliação aparecerá aqui em breve."
     );
   }
 
   return (
     <>
       <FeedbackFlow 
-        box={currentBox}
+        edition={currentEdition}
         onComplete={handleFeedbackComplete}
       />
       

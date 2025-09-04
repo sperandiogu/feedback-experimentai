@@ -1,8 +1,8 @@
 import { supabase, withRetry } from '@/lib/supabase';
-import type { BoxWithProducts, Box, ProductsCatalog } from '@/types/database';
+import type { EditionWithProducts, Edition, Products } from '@/types/database';
 
-export class BoxService {
-  static async list(sortBy: string = '-created_at', limit: number = 10): Promise<BoxWithProducts[]> {
+export class EditionService {
+  static async list(sortBy: string = '-created_at', limit: number = 10): Promise<EditionWithProducts[]> {
     try {
       return await withRetry(async () => {
         // Parse sort parameter
@@ -13,74 +13,71 @@ export class BoxService {
         // Check if we're using placeholder URL (development mode)
         if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
           console.warn('Using placeholder Supabase URL - falling back to mock data');
-          return this.getMockBoxes();
+          return this.getMockEditions();
         }
 
         const result = await withRetry(async () => {
-          const { data: boxes, error: boxesError } = await supabase
-            .from('boxes')
+          const { data: editions, error: editionsError } = await supabase
+            .from('edition')
             .select(`
               *,
-              box_products!inner(
-                quantity,
-                products_catalog!inner(*)
+              product_edition!inner(
+                products!inner(*)
               )
             `)
             .order(sortField, { ascending: !isDescending })
             .limit(limit);
 
-          if (boxesError) {
-            console.warn('Database error, using mock data:', boxesError);
-            throw new Error(`Database error: ${boxesError.message}`);
+          if (editionsError) {
+            console.warn('Database error, using mock data:', editionsError);
+            throw new Error(`Database error: ${editionsError.message}`);
           }
 
-          if (!boxes || boxes.length === 0) {
-            console.warn('No boxes found, using mock data');
-            throw new Error('No boxes found');
+          if (!editions || editions.length === 0) {
+            console.warn('No editions found, using mock data');
+            throw new Error('No editions found');
           }
 
           // Transform the data to match expected structure
-          const transformedBoxes: BoxWithProducts[] = boxes.map(box => ({
-            id: box.id,
-            theme: box.theme,
-            description: box.description,
-            created_at: box.created_at,
-            updated_at: box.updated_at,
-            products: box.box_products.map((bp: any) => ({
-              id: bp.products.id,
-              name: bp.products.name,
-              brand: bp.products.brand,
-              category: bp.products.category,
-              description: bp.products.description,
-              image_url: bp.products.image_url,
-              created_at: bp.products.created_at
+          const transformedEditions: EditionWithProducts[] = editions.map(edition => ({
+            edition_id: edition.edition_id,
+            edition: edition.edition,
+            created_at: edition.created_at,
+            updated_at: edition.updated_at,
+            products: edition.product_edition.map((pe: any) => ({
+              id: pe.products.id,
+              name: pe.products.name,
+              brand: pe.products.brand,
+              category: pe.products.category,
+              description: pe.products.description,
+              image_url: pe.products.image_url,
+              created_at: pe.products.created_at
             }))
           }));
 
-          return transformedBoxes;
+          return transformedEditions;
         });
 
         return result;
       });
     } catch (error) {
-      console.warn('Failed to fetch boxes from database, using mock data:', error);
-      return this.getMockBoxes();
+      console.warn('Failed to fetch editions from database, using mock data:', error);
+      return this.getMockEditions();
     }
   }
 
-  static async getById(id: string): Promise<BoxWithProducts | null> {
+  static async getById(id: string): Promise<EditionWithProducts | null> {
     try {
       return await withRetry(async () => {
         const { data, error } = await supabase
-          .from('boxes')
+          .from('edition')
           .select(`
             *,
-            box_products!inner(
-              quantity,
+            product_edition!inner(
               products!inner(*)
             )
           `)
-          .eq('id', id)
+          .eq('edition_id', id)
           .single();
 
         if (error) {
@@ -88,21 +85,20 @@ export class BoxService {
         }
 
         return {
-          id: data.id,
-          theme: data.theme,
-          description: data.description,
+          edition_id: data.edition_id,
+          edition: data.edition,
           created_at: data.created_at,
           updated_at: data.updated_at,
-          products: data.box_products.map((bp: any) => bp.products)
+          products: data.product_edition.map((pe: any) => pe.products)
         };
       });
     } catch (error) {
-      console.error('Error fetching box by ID:', error);
+      console.error('Error fetching edition by ID:', error);
       return null;
     }
   }
 
-  static async getBoxStats(boxId: string): Promise<{
+  static async getEditionStats(editionId: string): Promise<{
     total_feedback_sessions: number;
     average_ratings: {
       variety: number;
@@ -124,7 +120,7 @@ export class BoxService {
           experimentai_feedback(box_variety_rating, box_theme_rating, overall_satisfaction),
           product_feedback(product_name, experience_rating)
         `)
-        .eq('box_id', boxId)
+        .eq('edition_id', editionId)
         .eq('session_status', 'completed');
 
       if (sessionsError) throw sessionsError;
@@ -165,7 +161,7 @@ export class BoxService {
         product_ratings: productRatings
       };
     } catch (error) {
-      console.error('Error fetching box stats:', error);
+      console.error('Error fetching edition stats:', error);
       return {
         total_feedback_sessions: 0,
         average_ratings: { variety: 0, theme: 0, satisfaction: 0 },
@@ -180,12 +176,11 @@ export class BoxService {
     return Math.round((validNumbers.reduce((sum, n) => sum + n, 0) / validNumbers.length) * 100) / 100;
   }
 
-  private static getMockBoxes(): BoxWithProducts[] {
+  private static getMockEditions(): EditionWithProducts[] {
     return [
       {
-        id: 'mock-box-1',
-        theme: 'Sabores do Verão',
-        description: 'Uma seleção especial de produtos refrescantes para o verão',
+        edition_id: 'mock-edition-1',
+        edition: 'Sabores do Verão',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         products: [
@@ -196,11 +191,7 @@ export class BoxService {
             category: 'Sobremesas',
             description: 'Açaí cremoso e natural',
             image_url: null,
-            sku: null,
-            price: null,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            created_at: new Date().toISOString()
           },
           {
             id: 'mock-product-2',
@@ -209,11 +200,7 @@ export class BoxService {
             category: 'Bebidas',
             description: 'Água de coco 100% natural',
             image_url: null,
-            sku: null,
-            price: null,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            created_at: new Date().toISOString()
           },
           {
             id: 'mock-product-3',
@@ -222,11 +209,7 @@ export class BoxService {
             category: 'Snacks',
             description: 'Biscoito integral com fibras',
             image_url: null,
-            sku: null,
-            price: null,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            created_at: new Date().toISOString()
           }
         ]
       }

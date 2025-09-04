@@ -10,10 +10,9 @@ export interface Customer {
   stripe_customer_id?: string;
 }
 
-export interface Box {
-  id: string;
-  theme: string;
-  description?: string;
+export interface Edition {
+  edition_id: string;
+  edition: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -28,18 +27,15 @@ export interface Products {
   created_at?: string;
 }
 
-export interface BoxProducts {
-  id: string;
-  box_id: string;
+export interface ProductEdition {
+  edition_id: string;
   product_id: string;
-  quantity: number;
-  created_at?: string;
 }
 
 export interface FeedbackSession {
   id: string;
   customer_id?: string;
-  box_id?: string;
+  edition_id?: string;
   user_email?: string;
   session_status: 'in_progress' | 'completed' | 'abandoned';
   completion_badge?: string;
@@ -88,12 +84,12 @@ export interface DeliveryFeedback {
 }
 
 // Combined types for API responses
-export interface BoxWithProducts extends Box {
+export interface EditionWithProducts extends Edition {
   products: Products[];
 }
 
 export interface CompleteFeedbackData {
-  box_id: string;
+  edition_id: string;
   user_email?: string;
   product_feedbacks: Array<{
     product_name: string;

@@ -337,25 +337,25 @@ const DeliveryFeedback = ({ onComplete }: any) => {
   );
 };
 
-export default function FeedbackFlow({ box, onComplete }: any) {
+export default function FeedbackFlow({ edition, onComplete }: any) {
   const [currentStep, setCurrentStep] = useState('products');
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [productFeedbacks, setProductFeedbacks] = useState([]);
   const [experimentaiFeedback, setExperimentaiFeedback] = useState({});
 
-  const totalSteps = box.products.length + 2;
+  const totalSteps = edition.products.length + 2;
   const currentProgressIndex = currentStep === 'products'
     ? currentProductIndex
     : currentStep === 'experimentai'
-    ? box.products.length
-    : box.products.length + 1;
+    ? edition.products.length
+    : edition.products.length + 1;
   const progress = ((currentProgressIndex + 1) / totalSteps) * 100;
 
   const handleProductFeedback = (productName: string, feedback: any) => {
     const newFeedback = [...productFeedbacks, { product_name: productName, ...feedback }];
     setProductFeedbacks(newFeedback);
 
-    if (currentProductIndex + 1 < box.products.length) {
+    if (currentProductIndex + 1 < edition.products.length) {
       setCurrentProductIndex(currentProductIndex + 1);
     } else {
       setCurrentStep('experimentai');
@@ -369,7 +369,7 @@ export default function FeedbackFlow({ box, onComplete }: any) {
 
   const handleDeliveryFeedback = (feedback: any) => {
     const completeFeedback = {
-      box_id: box.id,
+      edition_id: edition.edition_id,
       product_feedbacks: productFeedbacks,
       experimentai_feedback: experimentaiFeedback,
       delivery_feedback: feedback,
@@ -403,17 +403,17 @@ export default function FeedbackFlow({ box, onComplete }: any) {
             {currentStep === 'products' && (
               <ProductCard
                 key={currentProductIndex}
-                product={box.products[currentProductIndex]}
+                product={edition.products[currentProductIndex]}
                 onFeedback={handleProductFeedback}
                 currentIndex={currentProductIndex}
-                totalProducts={box.products.length}
+                totalProducts={edition.products.length}
               />
             )}
 
             {currentStep === 'experimentai' && (
               <ExperimentaiFeedback
                 onComplete={handleExperimentaiFeedback}
-                box={box}
+                edition={edition}
               />
             )}
 
