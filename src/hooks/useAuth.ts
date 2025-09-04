@@ -12,6 +12,7 @@ export const useAuth = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
+        setLoading(true);
         if (firebaseUser) {
           setUser(firebaseUser);
           

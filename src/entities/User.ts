@@ -1,36 +1,34 @@
 import { supabase, withRetry } from '@/lib/supabase';
+import { auth } from '@/lib/firebase';
 import type { Customer } from '@/types/database';
 
 export class User {
   static async me(): Promise<Customer | null> {
     try {
       return await withRetry(async () => {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        // Get Firebase user instead of Supabase user
+        const firebaseUser = auth.currentUser;
         
-        if (authError) {
-          console.warn('No authenticated user found');
+        if (!firebaseUser || !firebaseUser.email) {
+          console.warn('No Firebase user found or no email');
           return null;
         }
 
-        if (user?.email) {
-          const { data, error } = await supabase
-            .from('customer')
-            .select('*')
-            .eq('email', user.email)
-            .single();
+        const { data, error } = await supabase
+          .from('customer')
+          .select('*')
+          .eq('email', firebaseUser.email)
+          .single();
 
-          if (error) {
-            if (error.code === 'PGRST116') {
-              // User not found in customer table, create new record
-              return await this.createCustomerFromAuth(user);
-            }
-            throw error;
+        if (error) {
+          if (error.code === 'PGRST116') {
+            // User not found in customer table, create new record
+            return await this.createCustomerFromAuth(firebaseUser);
           }
-
-          return data;
+          throw error;
         }
 
-        return null;
+        return data;
       });
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -38,10 +36,10 @@ export class User {
     }
   }
 
-  static async createCustomerFromAuth(user: any): Promise<Customer> {
+  static async createCustomerFromAuth(firebaseUser: any): Promise<Customer> {
     const customerData = {
-      email: user.email,
-      name: user.user_metadata?.full_name || user.email.split('@')[0],
+      email: firebaseUser.email,
+      name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
       created_at: new Date().toISOString()
     };
 
