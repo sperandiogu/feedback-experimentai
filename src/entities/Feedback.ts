@@ -1,4 +1,4 @@
-import { supabase, withRetry } from '@/lib/supabase';
+import { supabase, supabaseAdmin, withRetry } from '@/lib/supabase';
 import { User } from './User';
 import type { 
   CompleteFeedbackData, 
@@ -27,8 +27,8 @@ export class Feedback {
           console.log('No customer found, proceeding with anonymous feedback');
         }
         
-        // Use anon client for public insert
-        const { data: insertedSessionData, error: sessionError } = await supabase
+        // Use admin client to bypass RLS
+        const { data: insertedSessionData, error: sessionError } = await supabaseAdmin
           .from('feedback_sessions')
           .insert({
             id: sessionId,
@@ -52,7 +52,7 @@ export class Feedback {
 
         console.log('Feedback session created:', insertedSessionData);
 
-        // Insert product feedback with public access
+        // Insert product feedback with admin client
         if (feedbackData.product_feedbacks && feedbackData.product_feedbacks.length > 0) {
           const productFeedbackData = feedbackData.product_feedbacks.map(pf => ({
             feedback_session_id: sessionId,
@@ -64,7 +64,7 @@ export class Feedback {
             what_caught_attention: pf.what_caught_attention
           }));
 
-          const { error: productError } = await supabase
+          const { error: productError } = await supabaseAdmin
             .from('product_feedback')
             .insert(productFeedbackData);
 
@@ -74,9 +74,9 @@ export class Feedback {
           }
         }
 
-        // Create Experimentaí feedback with public access
+        // Create Experimentaí feedback with admin client
         if (feedbackData.experimentai_feedback) {
-          const { error: experimentaiError } = await supabase
+          const { error: experimentaiError } = await supabaseAdmin
             .from('experimentai_feedback')
             .insert({
               feedback_session_id: sessionId,
@@ -93,9 +93,9 @@ export class Feedback {
           }
         }
 
-        // Create delivery feedback with public access
+        // Create delivery feedback with admin client
         if (feedbackData.delivery_feedback) {
-          const { error: deliveryError } = await supabase
+          const { error: deliveryError } = await supabaseAdmin
             .from('delivery_feedback')
             .insert({
               feedback_session_id: sessionId,
