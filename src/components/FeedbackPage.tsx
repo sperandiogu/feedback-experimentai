@@ -104,6 +104,10 @@ export default function FeedbackPage() {
     window.location.reload();
   };
 
+  const handleFeedbackExit = () => {
+    window.location.reload();
+  };
+
   const renderStateCard = (icon: React.ReactNode, title: string, message: string, buttonText: string | null = null, buttonAction: (() => void) | null = null) => (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="bg-white border-none shadow-xl max-w-sm w-full rounded-3xl">
@@ -157,6 +161,7 @@ export default function FeedbackPage() {
       <FeedbackFlow 
         edition={currentEdition}
         onComplete={handleFeedbackComplete}
+        onExit={handleFeedbackExit}
       />
       
       {showCompletion && (
