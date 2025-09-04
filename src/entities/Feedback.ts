@@ -53,7 +53,7 @@ export class Feedback {
         }
         
         // 1. Create feedback session
-        const { data: session, error: sessionError } = await supabase
+        const { data: insertedSessionData, error: sessionError } = await supabase
           .from('feedback_sessions')
           .insert({
             id: sessionId,
