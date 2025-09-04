@@ -15,6 +15,7 @@ const getValidUrl = (envUrl: string | undefined): string => {
 
 const supabaseUrl = getValidUrl(import.meta.env.VITE_SUPABASE_URL);
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseAnonKey) {
   throw new Error('VITE_SUPABASE_ANON_KEY environment variable is required');
@@ -55,6 +56,16 @@ export const checkDatabaseConnection = async (): Promise<boolean> => {
     return false;
   }
 };
+
+// Service role client for backend operations that bypass RLS
+export const supabaseAdmin = supabaseServiceKey 
+  ? createClient<Database>(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : supabase // Fallback to regular client if service key not available
 
 // Connection retry mechanism for transient failures
 export const withRetry = async <T>(
