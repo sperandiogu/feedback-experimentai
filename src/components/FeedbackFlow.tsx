@@ -18,6 +18,27 @@ const ProductCard = ({ product, onFeedback, currentIndex, totalProducts, onExit,
   const [feedback, setFeedback] = useState({
     answers: {} as Record<string, any>
   });
+  const [productQuestions, setProductQuestions] = useState<Question[]>([]);
+  const [loadingProductQuestions, setLoadingProductQuestions] = useState(true);
+
+  // Load product-specific questions
+  React.useEffect(() => {
+    loadProductQuestions();
+  }, [product.id]);
+
+  const loadProductQuestions = async () => {
+    try {
+      setLoadingProductQuestions(true);
+      const productSpecificQuestions = await QuestionsService.getQuestionsByCategoryAndProduct('product', product.id);
+      setProductQuestions(productSpecificQuestions);
+    } catch (error) {
+      console.error('Error loading product-specific questions:', error);
+      // Fallback to global questions
+      setProductQuestions(questions);
+    } finally {
+      setLoadingProductQuestions(false);
+    }
+  };
 
   const handleAnswerChange = (questionId: string, value: any) => {
     setFeedback(prev => ({
@@ -32,20 +53,33 @@ const ProductCard = ({ product, onFeedback, currentIndex, totalProducts, onExit,
   const handleNext = () => {
     // Transform answers to match expected format
     const transformedFeedback = {
-      experience_rating: feedback.answers[questions[0]?.id] || 0,
-      would_buy: feedback.answers[questions[1]?.id] || null,
-      main_attraction: feedback.answers[questions[2]?.id] || null,
-      what_caught_attention: feedback.answers[questions[3]?.id] || '',
-      product_vibe: feedback.answers[questions[2]?.id] || null
+      experience_rating: feedback.answers[productQuestions[0]?.id] || 0,
+      would_buy: feedback.answers[productQuestions[1]?.id] || null,
+      main_attraction: feedback.answers[productQuestions[2]?.id] || null,
+      what_caught_attention: feedback.answers[productQuestions[3]?.id] || '',
+      product_vibe: feedback.answers[productQuestions[2]?.id] || null
     };
     
     onFeedback(product.name, transformedFeedback);
   };
 
   // Check if required questions are answered
-  const isComplete = questions
+  const isComplete = productQuestions
     .filter((q: Question) => q.is_required)
     .every((q: Question) => feedback.answers[q.id] !== undefined && feedback.answers[q.id] !== null && feedback.answers[q.id] !== '');
+
+  if (loadingProductQuestions) {
+    return (
+      <motion.div variants={cardVariants} initial="hidden" animate="visible" exit="exit" className="w-full max-w-md mx-auto">
+        <Card className="bg-white border-none shadow-xl rounded-3xl overflow-hidden">
+          <CardContent className="p-6 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando perguntas...</p>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div variants={cardVariants} initial="hidden" animate="visible" exit="exit" className="w-full max-w-md mx-auto">
@@ -72,7 +106,7 @@ const ProductCard = ({ product, onFeedback, currentIndex, totalProducts, onExit,
           </div>
 
           <div className="space-y-8">
-            {questions.map((question: Question) => (
+            {productQuestions.map((question: Question) => (
               <div key={question.id}>
                 <DynamicQuestionRenderer
                   question={question}
