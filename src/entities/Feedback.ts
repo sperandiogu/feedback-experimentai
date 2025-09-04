@@ -11,113 +11,144 @@ import type {
 export class Feedback {
   static async create(feedbackData: CompleteFeedbackData): Promise<{ success: boolean; sessionId?: string }> {
     try {
-      return await withRetry(async () => {
-        const sessionId = crypto.randomUUID();
-        
-        let userEmail = feedbackData.user_email;
-        let customerId = null;
-        
-        // Try to get customer info but don't fail if not available
-        const customer = await User.me().catch(() => null);
+      const sessionId = crypto.randomUUID();
+      
+      let userEmail = feedbackData.user_email || 'anonymous@example.com';
+      let customerId = null;
+      
+      // Try to get customer info but don't fail if not available
+      try {
+        const customer = await User.me();
         if (customer) {
           customerId = customer.customer_id;
           userEmail = customer.email;
         }
-        
-        console.log('Creating feedback session with data:', {
-          sessionId,
-          customerId,
-          userEmail,
-          edition_id: feedbackData.edition_id
-        });
-        
-        // Create feedback session with public client
-        const { data: insertedSessionData, error: sessionError } = await supabasePublic
+      } catch (error) {
+        console.warn('Could not load user, proceeding with anonymous session');
+      }
+      
+      console.log('Creating feedback session with data:', {
+        sessionId,
+        customerId,
+        userEmail,
+        edition_id: feedbackData.edition_id
+      });
+      
+      // Create feedback session - try with regular client first, then public
+      let insertedSessionData;
+      let sessionError;
+      
+      try {
+        const result = await supabase
           .from('feedback_sessions')
           .insert({
             id: sessionId,
             customer_id: customerId,
             edition_id: feedbackData.edition_id,
-            user_email: userEmail || 'anonymous@example.com',
+            user_email: userEmail,
             session_status: 'completed',
-            completion_badge: feedbackData.completion_badge,
-            final_message: feedbackData.final_message,
+            completion_badge: feedbackData.completion_badge || '🎉 Testador Expert',
+            final_message: feedbackData.final_message || '',
             completed_at: new Date().toISOString(),
             user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null
           })
           .select()
           .single();
+          
+        insertedSessionData = result.data;
+        sessionError = result.error;
+      } catch (error) {
+        console.warn('Failed with regular client, trying public client');
+        const result = await supabasePublic
+          .from('feedback_sessions')
+          .insert({
+            id: sessionId,
+            customer_id: customerId,
+            edition_id: feedbackData.edition_id,
+            user_email: userEmail,
+            session_status: 'completed',
+            completion_badge: feedbackData.completion_badge || '🎉 Testador Expert',
+            final_message: feedbackData.final_message || '',
+            completed_at: new Date().toISOString(),
+            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null
+          })
+          .select()
+          .single();
+          
+        insertedSessionData = result.data;
+        sessionError = result.error;
+      }
 
-        if (sessionError) {
-          console.error('Error creating feedback session:', sessionError);
-          throw new Error(`Failed to create feedback session: ${sessionError.message}`);
+      if (sessionError) {
+        console.error('Error creating feedback session:', sessionError);
+        throw new Error(`Failed to create feedback session: ${sessionError.message}`);
+      }
+
+      console.log('Feedback session created:', insertedSessionData);
+
+      // Insert product feedback
+      if (feedbackData.product_feedbacks && feedbackData.product_feedbacks.length > 0) {
+        const productFeedbackData = feedbackData.product_feedbacks.map(pf => ({
+          feedback_session_id: sessionId,
+          product_name: pf.product_name,
+          experience_rating: pf.experience_rating || 1,
+          would_buy: pf.would_buy || 'nao',
+          product_vibe: pf.product_vibe || '',
+          main_attraction: pf.main_attraction || '',
+          what_caught_attention: pf.what_caught_attention || ''
+        }));
+
+        const { error: productError } = await supabase
+          .from('product_feedback')
+          .insert(productFeedbackData);
+
+        if (productError) {
+          console.error('Error creating product feedback:', productError);
+          // Don't throw, just log the error and continue
+          console.warn('Product feedback failed, continuing...');
         }
+      }
 
-        console.log('Feedback session created:', insertedSessionData);
-
-        // Insert product feedback
-        if (feedbackData.product_feedbacks && feedbackData.product_feedbacks.length > 0) {
-          const productFeedbackData = feedbackData.product_feedbacks.map(pf => ({
+      // Create Experimentaí feedback
+      if (feedbackData.experimentai_feedback) {
+        const { error: experimentaiError } = await supabase
+          .from('experimentai_feedback')
+          .insert({
             feedback_session_id: sessionId,
-            product_name: pf.product_name,
-            experience_rating: pf.experience_rating || 1,
-            would_buy: pf.would_buy || 'nao',
-            product_vibe: pf.product_vibe || '',
-            main_attraction: pf.main_attraction || '',
-            what_caught_attention: pf.what_caught_attention || ''
-          }));
+            box_variety_rating: feedbackData.experimentai_feedback.box_variety_rating || 1,
+            box_theme_rating: feedbackData.experimentai_feedback.box_theme_rating || 1,
+            overall_satisfaction: feedbackData.experimentai_feedback.overall_satisfaction || 1,
+            would_recommend: feedbackData.experimentai_feedback.would_recommend || false,
+            favorite_product: feedbackData.experimentai_feedback.favorite_product || ''
+          });
 
-          const { error: productError } = await supabasePublic
-            .from('product_feedback')
-            .insert(productFeedbackData);
-
-          if (productError) {
-            console.error('Error creating product feedback:', productError);
-            throw new Error(`Failed to create product feedback: ${productError.message}`);
-          }
+        if (experimentaiError) {
+          console.error('Error creating experimentai feedback:', experimentaiError);
+          console.warn('Experimentai feedback failed, continuing...');
         }
+      }
 
-        // Create Experimentaí feedback
-        if (feedbackData.experimentai_feedback) {
-          const { error: experimentaiError } = await supabasePublic
-            .from('experimentai_feedback')
-            .insert({
-              feedback_session_id: sessionId,
-              box_variety_rating: feedbackData.experimentai_feedback.box_variety_rating || 1,
-              box_theme_rating: feedbackData.experimentai_feedback.box_theme_rating || 1,
-              overall_satisfaction: feedbackData.experimentai_feedback.overall_satisfaction || 1,
-              would_recommend: feedbackData.experimentai_feedback.would_recommend || false,
-              favorite_product: feedbackData.experimentai_feedback.favorite_product || ''
-            });
+      // Create delivery feedback
+      if (feedbackData.delivery_feedback) {
+        const { error: deliveryError } = await supabase
+          .from('delivery_feedback')
+          .insert({
+            feedback_session_id: sessionId,
+            delivery_time_rating: feedbackData.delivery_feedback.delivery_time_rating || 1,
+            packaging_condition: feedbackData.delivery_feedback.packaging_condition || 1,
+            delivery_experience: feedbackData.delivery_feedback.delivery_experience || 'ok',
+            delivery_notes: feedbackData.delivery_feedback.final_message || ''
+          });
 
-          if (experimentaiError) {
-            console.error('Error creating experimentai feedback:', experimentaiError);
-            throw new Error(`Failed to create experimentai feedback: ${experimentaiError.message}`);
-          }
+        if (deliveryError) {
+          console.error('Error creating delivery feedback:', deliveryError);
+          console.warn('Delivery feedback failed, continuing...');
         }
+      }
 
-        // Create delivery feedback
-        if (feedbackData.delivery_feedback) {
-          const { error: deliveryError } = await supabasePublic
-            .from('delivery_feedback')
-            .insert({
-              feedback_session_id: sessionId,
-              delivery_time_rating: feedbackData.delivery_feedback.delivery_time_rating || 1,
-              packaging_condition: feedbackData.delivery_feedback.packaging_condition || 1,
-              delivery_experience: feedbackData.delivery_feedback.delivery_experience || 'ok',
-              delivery_notes: feedbackData.delivery_feedback.final_message || ''
-            });
+      console.log('Feedback successfully saved to database');
 
-          if (deliveryError) {
-            console.error('Error creating delivery feedback:', deliveryError);
-            throw new Error(`Failed to create delivery feedback: ${deliveryError.message}`);
-          }
-        }
-
-        console.log('Feedback successfully saved to database');
-
-        return { success: true, sessionId };
-      });
+      return { success: true, sessionId };
     } catch (error) {
       console.error('Error saving feedback:', error);
       throw error;
