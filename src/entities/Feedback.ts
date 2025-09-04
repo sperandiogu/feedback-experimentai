@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin, withRetry } from '@/lib/supabase';
+import { supabase, supabasePublic, withRetry } from '@/lib/supabase';
 import { User } from './User';
 import type { 
   CompleteFeedbackData, 
@@ -17,30 +17,33 @@ export class Feedback {
         let userEmail = feedbackData.user_email;
         let customerId = null;
         
-        try {
-          const customer = await User.me();
-          if (customer) {
-            customerId = customer.customer_id;
-            userEmail = customer.email;
-          }
-        } catch (error) {
-          console.log('No customer found, proceeding with anonymous feedback');
+        // Try to get customer info but don't fail if not available
+        const customer = await User.me().catch(() => null);
+        if (customer) {
+          customerId = customer.customer_id;
+          userEmail = customer.email;
         }
         
-        // Use admin client to bypass RLS
-        const { data: insertedSessionData, error: sessionError } = await supabaseAdmin
+        console.log('Creating feedback session with data:', {
+          sessionId,
+          customerId,
+          userEmail,
+          edition_id: feedbackData.edition_id
+        });
+        
+        // Create feedback session with public client
+        const { data: insertedSessionData, error: sessionError } = await supabasePublic
           .from('feedback_sessions')
           .insert({
             id: sessionId,
             customer_id: customerId,
             edition_id: feedbackData.edition_id,
-            user_email: userEmail || null,
+            user_email: userEmail || 'anonymous@example.com',
             session_status: 'completed',
-            completion_badge: feedbackData.completion_badge || null,
-            final_message: feedbackData.final_message || null,
+            completion_badge: feedbackData.completion_badge,
+            final_message: feedbackData.final_message,
             completed_at: new Date().toISOString(),
-            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-            ip_address: null
+            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null
           })
           .select()
           .single();
@@ -52,19 +55,19 @@ export class Feedback {
 
         console.log('Feedback session created:', insertedSessionData);
 
-        // Insert product feedback with admin client
+        // Insert product feedback
         if (feedbackData.product_feedbacks && feedbackData.product_feedbacks.length > 0) {
           const productFeedbackData = feedbackData.product_feedbacks.map(pf => ({
             feedback_session_id: sessionId,
             product_name: pf.product_name,
-            experience_rating: pf.experience_rating,
-            would_buy: pf.would_buy,
-            product_vibe: pf.product_vibe,
-            main_attraction: pf.main_attraction,
-            what_caught_attention: pf.what_caught_attention
+            experience_rating: pf.experience_rating || 1,
+            would_buy: pf.would_buy || 'nao',
+            product_vibe: pf.product_vibe || '',
+            main_attraction: pf.main_attraction || '',
+            what_caught_attention: pf.what_caught_attention || ''
           }));
 
-          const { error: productError } = await supabaseAdmin
+          const { error: productError } = await supabasePublic
             .from('product_feedback')
             .insert(productFeedbackData);
 
@@ -74,17 +77,17 @@ export class Feedback {
           }
         }
 
-        // Create Experimentaí feedback with admin client
+        // Create Experimentaí feedback
         if (feedbackData.experimentai_feedback) {
-          const { error: experimentaiError } = await supabaseAdmin
+          const { error: experimentaiError } = await supabasePublic
             .from('experimentai_feedback')
             .insert({
               feedback_session_id: sessionId,
-              box_variety_rating: feedbackData.experimentai_feedback.box_variety_rating,
-              box_theme_rating: feedbackData.experimentai_feedback.box_theme_rating,
-              overall_satisfaction: feedbackData.experimentai_feedback.overall_satisfaction,
-              would_recommend: feedbackData.experimentai_feedback.would_recommend,
-              favorite_product: feedbackData.experimentai_feedback.favorite_product || null
+              box_variety_rating: feedbackData.experimentai_feedback.box_variety_rating || 1,
+              box_theme_rating: feedbackData.experimentai_feedback.box_theme_rating || 1,
+              overall_satisfaction: feedbackData.experimentai_feedback.overall_satisfaction || 1,
+              would_recommend: feedbackData.experimentai_feedback.would_recommend || false,
+              favorite_product: feedbackData.experimentai_feedback.favorite_product || ''
             });
 
           if (experimentaiError) {
@@ -93,16 +96,16 @@ export class Feedback {
           }
         }
 
-        // Create delivery feedback with admin client
+        // Create delivery feedback
         if (feedbackData.delivery_feedback) {
-          const { error: deliveryError } = await supabaseAdmin
+          const { error: deliveryError } = await supabasePublic
             .from('delivery_feedback')
             .insert({
               feedback_session_id: sessionId,
-              delivery_time_rating: feedbackData.delivery_feedback.delivery_time_rating,
-              packaging_condition: feedbackData.delivery_feedback.packaging_condition,
-              delivery_experience: feedbackData.delivery_feedback.delivery_experience,
-              delivery_notes: feedbackData.delivery_feedback.final_message || null
+              delivery_time_rating: feedbackData.delivery_feedback.delivery_time_rating || 1,
+              packaging_condition: feedbackData.delivery_feedback.packaging_condition || 1,
+              delivery_experience: feedbackData.delivery_feedback.delivery_experience || 'ok',
+              delivery_notes: feedbackData.delivery_feedback.final_message || ''
             });
 
           if (deliveryError) {

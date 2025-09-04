@@ -25,14 +25,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: false
   },
   db: {
     schema: 'public'
   },
   global: {
     headers: {
-      'x-my-custom-header': 'experimentai-feedback-system'
+      'x-my-custom-header': 'experimentai-feedback-system',
+      'apikey': supabaseAnonKey
     }
   }
 });
@@ -57,15 +58,17 @@ export const checkDatabaseConnection = async (): Promise<boolean> => {
   }
 };
 
-// Service role client for backend operations that bypass RLS
-export const supabaseAdmin = supabaseServiceKey 
-  ? createClient<Database>(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
-  : supabase // Fallback to regular client if service key not available
+// Create a simple client for anonymous operations
+export const supabasePublic = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+    detectSessionInUrl: false
+  },
+  db: {
+    schema: 'public'
+  }
+});
 
 // Connection retry mechanism for transient failures
 export const withRetry = async <T>(
