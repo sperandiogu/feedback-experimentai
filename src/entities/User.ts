@@ -66,10 +66,7 @@ export class User {
 
         const { data, error } = await supabase
           .from('customer')
-          .update({
-            ...updates,
-            updated_at: new Date().toISOString()
-          })
+          .update(updates)
           .eq('customer_id', currentUser.customer_id)
           .select()
           .single();
