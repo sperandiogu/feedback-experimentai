@@ -54,9 +54,19 @@ const ProductCard = ({ product, onFeedback, currentIndex, totalProducts, onExit,
 
   const handleNext = () => {
     // Transform answers to match expected format
+    const wouldBuyAnswer = feedback.answers[productQuestions[1]?.id];
+    let wouldBuyValue = null;
+    if (wouldBuyAnswer === true) {
+      wouldBuyValue = 'sim';
+    } else if (wouldBuyAnswer === false) {
+      wouldBuyValue = 'nao';
+    } else if (typeof wouldBuyAnswer === 'string') {
+      wouldBuyValue = wouldBuyAnswer;
+    }
+    
     const transformedFeedback = {
       experience_rating: feedback.answers[productQuestions[0]?.id] || 0,
-      would_buy: feedback.answers[productQuestions[1]?.id] || null,
+      would_buy: wouldBuyValue,
       main_attraction: feedback.answers[productQuestions[2]?.id] || null,
       what_caught_attention: feedback.answers[productQuestions[3]?.id] || '',
       product_vibe: feedback.answers[productQuestions[2]?.id] || null
