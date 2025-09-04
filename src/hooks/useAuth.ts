@@ -15,7 +15,7 @@ export const useAuth = () => {
         if (firebaseUser) {
           setUser(firebaseUser);
           
-          // Check if user email exists in customer table
+          // Check if user email exists in customer table (active subscription)
           const { data, error: supabaseError } = await supabase
             .from('customer')
             .select('email')
@@ -24,7 +24,7 @@ export const useAuth = () => {
 
           if (supabaseError || !data) {
             setIsAuthorized(false);
-            setError('Email não autorizado para acessar o sistema');
+            setError('Sua assinatura está inativa. Entre em contato conosco para reativar seu acesso.');
           } else {
             setIsAuthorized(true);
             setError('');
@@ -36,7 +36,7 @@ export const useAuth = () => {
         }
       } catch (err) {
         console.error('Auth state change error:', err);
-        setError('Erro ao verificar autenticação');
+        setError('Erro ao verificar status da assinatura');
       } finally {
         setLoading(false);
       }
