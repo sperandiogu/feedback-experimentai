@@ -9,14 +9,14 @@ export const useAuth = () => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
-        } else {
+          console.log('No Firebase user found');
           setUser(null);
           setIsAuthorized(false);
           setError('');
         }
       } catch (err) {
         console.error('Auth state change error:', err);
-      }
+        setError('Erro ao verificar autenticação');
     });
   }, []);
 };
