@@ -155,7 +155,7 @@ const ProductCard = ({ product, onFeedback, currentIndex, totalProducts }: any) 
   );
 };
 
-const ExperimentaiFeedback = ({ onComplete, box }: any) => {
+const ExperimentaiFeedback = ({ onComplete, edition }: any) => {
   const [feedback, setFeedback] = useState({
     box_variety_rating: 0,
     favorite_product: '',
@@ -196,7 +196,7 @@ const ExperimentaiFeedback = ({ onComplete, box }: any) => {
             </div>
 
             <div>
-              <p className="font-semibold mb-3 text-center text-base">Curadoria do tema "{box.theme}"</p>
+              <p className="font-semibold mb-3 text-center text-base">Curadoria do tema "{edition.edition}"</p>
               <div className="flex justify-center gap-1">
                 {[1,2,3,4,5].map((star) => (
                   <button key={star} onClick={() => setFeedback({...feedback, box_theme_rating: star})} className="p-1">
