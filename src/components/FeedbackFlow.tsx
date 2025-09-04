@@ -411,7 +411,7 @@ const ExitConfirmationModal = ({ onConfirm, onCancel }: any) => {
   );
 };
 
-export default function FeedbackFlow({ edition, onComplete, onExit }: any) {
+export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: any) {
   const [currentStep, setCurrentStep] = useState('products');
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [productFeedbacks, setProductFeedbacks] = useState([]);
@@ -443,8 +443,8 @@ export default function FeedbackFlow({ edition, onComplete, onExit }: any) {
   };
 
   const handleExitConfirm = () => {
-    if (onExit) {
-      onExit();
+    if (onLogout) {
+      onLogout();
     } else {
       window.location.reload();
     }

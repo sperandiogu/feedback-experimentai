@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { User } from '@/entities/User';
 import { EditionService } from '@/entities/Box';
 import { Feedback } from '@/entities/Feedback';
@@ -11,6 +12,7 @@ import { checkDatabaseConnection } from '@/lib/supabase';
 import type { Customer, EditionWithProducts } from '@/types/database';
 
 export default function FeedbackPage() {
+  const { signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Customer | null>(null);
   const [currentEdition, setCurrentEdition] = useState<EditionWithProducts | null>(null);
@@ -105,7 +107,11 @@ export default function FeedbackPage() {
   };
 
   const handleFeedbackExit = () => {
-    window.location.reload();
+    signOut();
+  };
+
+  const handleLogout = () => {
+    signOut();
   };
 
   const renderStateCard = (icon: React.ReactNode, title: string, message: string, buttonText: string | null = null, buttonAction: (() => void) | null = null) => (
@@ -162,6 +168,7 @@ export default function FeedbackPage() {
         edition={currentEdition}
         onComplete={handleFeedbackComplete}
         onExit={handleFeedbackExit}
+        onLogout={handleLogout}
       />
       
       {showCompletion && (
