@@ -149,7 +149,7 @@ export class QuestionsService {
   static async getQuestionsByCategoryAndProduct(categoryName: string, productId?: string): Promise<Question[]> {
     try {
       return await withRetry(async () => {
-        // Get global questions (product_id is null) and product-specific questions
+        // Get global questions (product_id is null) and product-specific questions if productId is provided
         const { data: questions, error } = await supabase
           .from('questions')
           .select(`
@@ -159,7 +159,7 @@ export class QuestionsService {
           `)
           .eq('question_categories.name', categoryName)
           .eq('is_active', true)
-          .or(`product_id.is.null,product_id.eq.${productId || 'null'}`)
+          .or(productId ? `product_id.is.null,product_id.eq.${productId}` : 'product_id.is.null')
           .order('order_index');
 
         if (error) {

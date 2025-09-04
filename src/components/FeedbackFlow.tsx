@@ -29,12 +29,14 @@ const ProductCard = ({ product, onFeedback, currentIndex, totalProducts, onExit,
   const loadProductQuestions = async () => {
     try {
       setLoadingProductQuestions(true);
+      // Load both global and product-specific questions for this product
       const productSpecificQuestions = await QuestionsService.getQuestionsByCategoryAndProduct('product', product.id);
       setProductQuestions(productSpecificQuestions);
     } catch (error) {
       console.error('Error loading product-specific questions:', error);
-      // Fallback to global questions
-      setProductQuestions(questions);
+      // Fallback to global questions only
+      const globalQuestions = await QuestionsService.getQuestionsByCategory('product');
+      setProductQuestions(globalQuestions);
     } finally {
       setLoadingProductQuestions(false);
     }
