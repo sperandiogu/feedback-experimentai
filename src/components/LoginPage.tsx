@@ -1,3 +1,47 @@
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { AlertCircle, Loader2, Star, Shield } from 'lucide-react';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+
+interface LoginPageProps {
+  onSignIn: () => Promise<void>;
+  error: string | null;
+}
+
+export default function LoginPage({ onSignIn, error }: LoginPageProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [showFeatures, setShowFeatures] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowFeatures(true), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      await onSignIn();
+    } catch (err) {
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Main Login Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <Card className="bg-white/80 backdrop-blur-sm border-none shadow-xl rounded-3xl">
+            <CardContent className="p-8">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Bem-vindo!</h2>
                 <p className="text-gray-600">
                   Faça login para avaliar produtos e compartilhar sua experiência
                 </p>
@@ -67,7 +111,7 @@
                   <p className="text-xs text-gray-600">Compartilhe sua experiência com novos produtos</p>
                 </div>
               </div>
-          transition={{ duration: 0.6 }}
+            </div>
 
             <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
               <div className="flex items-center gap-3">
@@ -79,21 +123,10 @@
                   <p className="text-xs text-gray-600">Login protegido apenas para usuários autorizados</p>
                 </div>
               </div>
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center p-4">
+            </div>
           </motion.div>
         )}
       </div>
-        >
-   const handleGoogleSignIn = async () => {
-          }
-          <Card className="bg-white/80 backdrop-blur-sm border-none shadow-xl rounded-3xl">
-     setIsLoading(true);
-            <CardContent className="p-8">
-     try {
-              <div className="text-center mb-8">
-import React, { useState, useEffect } from 'react';
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Bem-vindo!</h2>
-     }
-          }
-        )
-        }
+    </div>
+  );
+}
