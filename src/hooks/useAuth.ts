@@ -1,3 +1,8 @@
+import { useState, useEffect } from 'react';
+import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
+import { auth } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
+
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
