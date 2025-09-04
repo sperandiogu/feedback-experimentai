@@ -85,6 +85,7 @@
       </div>
         >
    const handleGoogleSignIn = async () => {
+          }
           <Card className="bg-white/80 backdrop-blur-sm border-none shadow-xl rounded-3xl">
      setIsLoading(true);
             <CardContent className="p-8">
@@ -93,3 +94,6 @@
 import React, { useState, useEffect } from 'react';
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Bem-vindo!</h2>
      }
+          }
+        )
+        }
