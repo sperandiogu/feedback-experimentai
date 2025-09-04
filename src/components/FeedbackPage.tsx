@@ -79,22 +79,18 @@ export default function FeedbackPage() {
           
           // Update user data if user exists
           if (currentUser) {
-          user_email: user?.email || null,
+            try {
               await User.updateMyUserData({});
-          edition_id: null, // Set to null if not available
-          customer_id: null, // Set to null since we're using Firebase auth
             } catch (updateError) {
               console.warn('Could not update user data:', updateError);
-          ip_address: null,
-          user_agent: navigator.userAgent || null,
             }
           }
         }
       } catch (saveError) {
         console.error('Error saving feedback:', saveError);
         setError('Erro ao salvar feedback. Tente novamente.');
-        console.error('Error creating feedback session:', sessionError);
-        throw new Error(`Failed to create feedback session: ${sessionError.message}`);
+        console.error('Error creating feedback session:', saveError);
+        throw new Error(`Failed to create feedback session: ${saveError.message}`);
       }
 
       setCompletionBadge(feedbackData.completion_badge);
