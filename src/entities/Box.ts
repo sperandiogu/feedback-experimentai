@@ -47,17 +47,13 @@ export class BoxService {
             created_at: box.created_at,
             updated_at: box.updated_at,
             products: box.box_products.map((bp: any) => ({
-              id: bp.products_catalog.id,
-              name: bp.products_catalog.name,
-              brand: bp.products_catalog.brand,
-              category: bp.products_catalog.category,
-              description: bp.products_catalog.description,
-              image_url: bp.products_catalog.image_url,
-              sku: bp.products_catalog.sku,
-              price: bp.products_catalog.price,
-              is_active: bp.products_catalog.is_active,
-              created_at: bp.products_catalog.created_at,
-              updated_at: bp.products_catalog.updated_at
+              id: bp.products.id,
+              name: bp.products.name,
+              brand: bp.products.brand,
+              category: bp.products.category,
+              description: bp.products.description,
+              image_url: bp.products.image_url,
+              created_at: bp.products.created_at
             }))
           }));
 
@@ -81,7 +77,7 @@ export class BoxService {
             *,
             box_products!inner(
               quantity,
-              products_catalog!inner(*)
+              products!inner(*)
             )
           `)
           .eq('id', id)
@@ -97,7 +93,7 @@ export class BoxService {
           description: data.description,
           created_at: data.created_at,
           updated_at: data.updated_at,
-          products: data.box_products.map((bp: any) => bp.products_catalog)
+          products: data.box_products.map((bp: any) => bp.products)
         };
       });
     } catch (error) {

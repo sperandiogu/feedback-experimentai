@@ -18,18 +18,14 @@ export interface Box {
   updated_at?: string;
 }
 
-export interface ProductsCatalog {
+export interface Products {
   id: string;
   name: string;
   brand: string;
   category?: string;
   description?: string;
   image_url?: string;
-  sku?: string;
-  price?: number;
-  is_active: boolean;
   created_at?: string;
-  updated_at?: string;
 }
 
 export interface BoxProducts {
@@ -93,7 +89,7 @@ export interface DeliveryFeedback {
 
 // Combined types for API responses
 export interface BoxWithProducts extends Box {
-  products: ProductsCatalog[];
+  products: Products[];
 }
 
 export interface CompleteFeedbackData {
