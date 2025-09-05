@@ -20,6 +20,7 @@ export default function FeedbackPage() {
   const [completionBadge, setCompletionBadge] = useState('');
   const [error, setError] = useState('');
   const [dbConnected, setDbConnected] = useState(true);
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
   useEffect(() => {
     loadUserAndEdition();
@@ -43,6 +44,15 @@ export default function FeedbackPage() {
         if (editions.length > 0) {
           setCurrentEdition(editions[0]);
           setDbConnected(true);
+          
+          // Check if user already submitted feedback for this edition
+          if (user) {
+            const hasSubmitted = await Feedback.hasUserSubmittedFeedback(
+              editions[0].edition_id, 
+              user.email
+            );
+            setAlreadySubmitted(hasSubmitted);
+          }
         } else {
           setError('Nenhuma edição encontrada para avaliação no momento.');
           setDbConnected(false);
@@ -154,6 +164,18 @@ export default function FeedbackPage() {
       <Package className="w-8 h-8 text-purple-600" />,
       "Nenhuma edição para avaliar",
       "Fique de olho! Sua próxima edição para avaliação aparecerá aqui em breve."
+    );
+  }
+
+  if (alreadySubmitted) {
+    return renderStateCard(
+      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+        <span className="text-white text-lg">✓</span>
+      </div>,
+      "Feedback já enviado!",
+      `Você já avaliou a edição "${currentEdition?.edition}". Obrigado pela sua participação!`,
+      "Fazer logout",
+      handleLogout
     );
   }
 

@@ -9,6 +9,28 @@ import type {
 } from '@/types/database';
 
 export class Feedback {
+  static async hasUserSubmittedFeedback(editionId: string, userEmail: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('feedback_sessions')
+        .select('id')
+        .eq('edition_id', editionId)
+        .eq('user_email', userEmail)
+        .eq('session_status', 'completed')
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking existing feedback:', error);
+        return false; // Allow feedback if we can't check
+      }
+
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error checking existing feedback:', error);
+      return false; // Allow feedback if we can't check
+    }
+  }
+
   static async create(feedbackData: CompleteFeedbackData): Promise<{ success: boolean; sessionId?: string }> {
     try {
       console.log('Sending feedback to webhook:', feedbackData);
