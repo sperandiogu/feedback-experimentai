@@ -38,9 +38,16 @@ export class Feedback {
         final_message: feedbackData.final_message || '',
         completed_at: new Date().toISOString(),
         user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-        product_feedbacks: feedbackData.product_feedbacks || [],
-        experimentai_feedback: feedbackData.experimentai_feedback || {},
-        delivery_feedback: feedbackData.delivery_feedback || {}
+        product_feedbacks: feedbackData.product_feedbacks?.map((pf: any) => ({
+          product_name: pf.product_name,
+          answers: pf.answers || []
+        })) || [],
+        experimentai_feedback: {
+          answers: feedbackData.experimentai_feedback?.answers || []
+        },
+        delivery_feedback: {
+          answers: feedbackData.delivery_feedback?.answers || []
+        }
       };
       
       // Send to webhook

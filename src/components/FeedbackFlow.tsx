@@ -53,26 +53,15 @@ const ProductCard = ({ product, onFeedback, currentIndex, totalProducts, onExit,
   };
 
   const handleNext = () => {
-    // Transform answers to match expected format
-    const wouldBuyAnswer = feedback.answers[productQuestions[1]?.id];
-    let wouldBuyValue = null;
-    if (wouldBuyAnswer === true) {
-      wouldBuyValue = 'sim';
-    } else if (wouldBuyAnswer === false) {
-      wouldBuyValue = 'nao';
-    } else if (typeof wouldBuyAnswer === 'string') {
-      wouldBuyValue = wouldBuyAnswer;
-    }
+    // Send raw answers with question details
+    const answersWithQuestions = productQuestions.map(question => ({
+      question_id: question.id,
+      question_text: question.question_text,
+      question_type: question.question_type,
+      answer: feedback.answers[question.id]
+    }));
     
-    const transformedFeedback = {
-      experience_rating: feedback.answers[productQuestions[0]?.id] || 0,
-      would_buy: wouldBuyValue,
-      main_attraction: feedback.answers[productQuestions[2]?.id] || null,
-      what_caught_attention: feedback.answers[productQuestions[3]?.id] || '',
-      product_vibe: feedback.answers[productQuestions[2]?.id] || null
-    };
-    
-    onFeedback(product.name, transformedFeedback);
+    onFeedback(product.name, { answers: answersWithQuestions });
   };
 
   // Check if required questions are answered
@@ -163,16 +152,15 @@ const ExperimentaiFeedback = ({ onComplete, edition, onExit, questions }: any) =
   };
 
   const handleSubmit = () => {
-    // Transform answers to match expected format
-    const transformedFeedback = {
-      box_variety_rating: feedback.answers[questions[0]?.id] || 0,
-      box_theme_rating: feedback.answers[questions[1]?.id] || 0,
-      overall_satisfaction: feedback.answers[questions[2]?.id] || 0,
-      would_recommend: feedback.answers[questions[3]?.id] || null,
-      favorite_product: ''
-    };
+    // Send raw answers with question details
+    const answersWithQuestions = questions.map((question: Question) => ({
+      question_id: question.id,
+      question_text: question.question_text,
+      question_type: question.question_type,
+      answer: feedback.answers[question.id]
+    }));
     
-    onComplete(transformedFeedback);
+    onComplete({ answers: answersWithQuestions });
   };
 
   // Check if required questions are answered
@@ -241,15 +229,15 @@ const DeliveryFeedback = ({ onComplete, onExit, questions }: any) => {
   };
 
   const handleSubmit = () => {
-    // Transform answers to match expected format
-    const transformedFeedback = {
-      delivery_time_rating: feedback.answers[questions[0]?.id] || 0,
-      packaging_condition: feedback.answers[questions[1]?.id] || 0,
-      delivery_experience: feedback.answers[questions[2]?.id] || '',
-      final_message: feedback.answers[questions[3]?.id] || ''
-    };
+    // Send raw answers with question details
+    const answersWithQuestions = questions.map((question: Question) => ({
+      question_id: question.id,
+      question_text: question.question_text,
+      question_type: question.question_type,
+      answer: feedback.answers[question.id]
+    }));
     
-    onComplete(transformedFeedback);
+    onComplete({ answers: answersWithQuestions });
   };
 
   // Check if required questions are answered
