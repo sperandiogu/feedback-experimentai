@@ -77,18 +77,11 @@ export default function FeedbackPage() {
         if (result.success) {
           console.log('Feedback saved successfully:', result.sessionId);
           
-          // Update user data if user exists
-          if (currentUser) {
-            try {
-              await User.updateMyUserData({});
-            } catch (updateError) {
-              console.warn('Could not update user data:', updateError);
-            }
-          }
+          // No need to update user data when using webhook
         }
       } catch (saveError) {
-        console.error('Error saving feedback:', saveError);
-        setError('Erro ao salvar feedback. Tente novamente.');
+        console.error('Error sending feedback:', saveError);
+        setError('Erro ao enviar feedback. Tente novamente.');
         console.error('Error creating feedback session:', saveError);
         throw new Error(`Failed to create feedback session: ${saveError.message}`);
       }
@@ -96,8 +89,8 @@ export default function FeedbackPage() {
       setCompletionBadge(feedbackData.completion_badge);
       setShowCompletion(true);
     } catch (err) {
-      console.error('Erro ao salvar feedback:', err);
-      setError('Ocorreu um erro ao salvar seu feedback. Tente de novo.');
+      console.error('Erro ao enviar feedback:', err);
+      setError('Ocorreu um erro ao enviar seu feedback. Tente de novo.');
     } finally {
       setLoading(false);
     }

@@ -11,12 +11,12 @@ import type {
 export class Feedback {
   static async create(feedbackData: CompleteFeedbackData): Promise<{ success: boolean; sessionId?: string }> {
     try {
-      const sessionId = crypto.randomUUID();
+      console.log('Sending feedback to webhook:', feedbackData);
       
+      // Get user info
       let userEmail = feedbackData.user_email || 'anonymous@example.com';
       let customerId = null;
       
-      // Try to get customer info but don't fail if not available
       try {
         const customer = await User.me();
         if (customer) {
@@ -27,130 +27,43 @@ export class Feedback {
         console.warn('Could not load user, proceeding with anonymous session');
       }
       
-      console.log('Creating feedback session with data:', {
-        sessionId,
-        customerId,
-        userEmail,
-        edition_id: feedbackData.edition_id
+      // Prepare webhook payload
+      const webhookPayload = {
+        session_id: crypto.randomUUID(),
+        customer_id: customerId,
+        user_email: userEmail,
+        edition_id: feedbackData.edition_id,
+        session_status: 'completed',
+        completion_badge: feedbackData.completion_badge || '🎉 Testador Expert',
+        final_message: feedbackData.final_message || '',
+        completed_at: new Date().toISOString(),
+        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+        product_feedbacks: feedbackData.product_feedbacks || [],
+        experimentai_feedback: feedbackData.experimentai_feedback || {},
+        delivery_feedback: feedbackData.delivery_feedback || {}
+      };
+      
+      // Send to webhook
+      const response = await fetch('https://primary-production-0c5d.up.railway.app/webhook-test/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload)
       });
       
-      // Create feedback session - try with regular client first, then public
-      let insertedSessionData;
-      let sessionError;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Webhook response error:', errorText);
+        throw new Error(`Webhook failed with status ${response.status}: ${errorText}`);
+      }
       
-      try {
-        const result = await supabase
-          .from('feedback_sessions')
-          .insert({
-            id: sessionId,
-            customer_id: customerId,
-            edition_id: feedbackData.edition_id,
-            user_email: userEmail,
-            session_status: 'completed',
-            completion_badge: feedbackData.completion_badge || '🎉 Testador Expert',
-            final_message: feedbackData.final_message || '',
-            completed_at: new Date().toISOString(),
-            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null
-          })
-          .select()
-          .single();
-          
-        insertedSessionData = result.data;
-        sessionError = result.error;
-      } catch (error) {
-        console.warn('Failed with regular client, trying public client');
-        const result = await supabasePublic
-          .from('feedback_sessions')
-          .insert({
-            id: sessionId,
-            customer_id: customerId,
-            edition_id: feedbackData.edition_id,
-            user_email: userEmail,
-            session_status: 'completed',
-            completion_badge: feedbackData.completion_badge || '🎉 Testador Expert',
-            final_message: feedbackData.final_message || '',
-            completed_at: new Date().toISOString(),
-            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null
-          })
-          .select()
-          .single();
-          
-        insertedSessionData = result.data;
-        sessionError = result.error;
-      }
-
-      if (sessionError) {
-        console.error('Error creating feedback session:', sessionError);
-        throw new Error(`Failed to create feedback session: ${sessionError.message}`);
-      }
-
-      console.log('Feedback session created:', insertedSessionData);
-
-      // Insert product feedback
-      if (feedbackData.product_feedbacks && feedbackData.product_feedbacks.length > 0) {
-        const productFeedbackData = feedbackData.product_feedbacks.map(pf => ({
-          feedback_session_id: sessionId,
-          product_name: pf.product_name,
-          experience_rating: pf.experience_rating || 1,
-          would_buy: pf.would_buy || 'nao',
-          product_vibe: pf.product_vibe || '',
-          main_attraction: pf.main_attraction || '',
-          what_caught_attention: pf.what_caught_attention || ''
-        }));
-
-        const { error: productError } = await supabase
-          .from('product_feedback')
-          .insert(productFeedbackData);
-
-        if (productError) {
-          console.error('Error creating product feedback:', productError);
-          // Don't throw, just log the error and continue
-          console.warn('Product feedback failed, continuing...');
-        }
-      }
-
-      // Create Experimentaí feedback
-      if (feedbackData.experimentai_feedback) {
-        const { error: experimentaiError } = await supabase
-          .from('experimentai_feedback')
-          .insert({
-            feedback_session_id: sessionId,
-            box_variety_rating: feedbackData.experimentai_feedback.box_variety_rating || 1,
-            box_theme_rating: feedbackData.experimentai_feedback.box_theme_rating || 1,
-            overall_satisfaction: feedbackData.experimentai_feedback.overall_satisfaction || 1,
-            would_recommend: feedbackData.experimentai_feedback.would_recommend || false,
-            favorite_product: feedbackData.experimentai_feedback.favorite_product || ''
-          });
-
-        if (experimentaiError) {
-          console.error('Error creating experimentai feedback:', experimentaiError);
-          console.warn('Experimentai feedback failed, continuing...');
-        }
-      }
-
-      // Create delivery feedback
-      if (feedbackData.delivery_feedback) {
-        const { error: deliveryError } = await supabase
-          .from('delivery_feedback')
-          .insert({
-            feedback_session_id: sessionId,
-            delivery_time_rating: feedbackData.delivery_feedback.delivery_time_rating || 1,
-            packaging_condition: feedbackData.delivery_feedback.packaging_condition || 1,
-            delivery_experience: feedbackData.delivery_feedback.delivery_experience || 'ok',
-            delivery_notes: feedbackData.delivery_feedback.final_message || ''
-          });
-
-        if (deliveryError) {
-          console.error('Error creating delivery feedback:', deliveryError);
-          console.warn('Delivery feedback failed, continuing...');
-        }
-      }
-
-      console.log('Feedback successfully saved to database');
-
-      return { success: true, sessionId };
+      const result = await response.json();
+      console.log('Feedback successfully sent to webhook:', result);
+      
+      return { success: true, sessionId: webhookPayload.session_id };
     } catch (error) {
-      console.error('Error saving feedback:', error);
+      console.error('Error sending feedback to webhook:', error);
       throw error;
     }
   }
