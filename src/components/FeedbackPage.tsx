@@ -46,10 +46,10 @@ export default function FeedbackPage() {
           setDbConnected(true);
           
           // Check if user already submitted feedback for this edition
-          if (user) {
+          if (currentUser) {
             const hasSubmitted = await Feedback.hasUserSubmittedFeedback(
               editions[0].edition_id, 
-              user.email
+              currentUser.email
             );
             setAlreadySubmitted(hasSubmitted);
           }
