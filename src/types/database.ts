@@ -53,33 +53,21 @@ export interface ProductFeedback {
   feedback_session_id: string;
   product_id?: string;
   product_name: string;
-  experience_rating: number;
-  would_buy: 'sim' | 'talvez' | 'nao';
-  product_vibe?: string;
-  main_attraction?: string;
-  what_caught_attention?: string;
+  answers?: Array<{ question_id: string; question_text: string; question_type: string; answer: any }>;
   created_at?: string;
 }
 
 export interface ExperimentaiFeedback {
   id: string;
   feedback_session_id: string;
-  box_variety_rating: number;
-  box_theme_rating: number;
-  overall_satisfaction: number;
-  would_recommend: boolean;
-  favorite_product?: string;
-  suggestions?: string;
+  answers?: Array<{ question_id: string; question_text: string; question_type: string; answer: any }>;
   created_at?: string;
 }
 
 export interface DeliveryFeedback {
   id: string;
   feedback_session_id: string;
-  delivery_time_rating: number;
-  packaging_condition: number;
-  delivery_experience: 'excelente' | 'boa' | 'ok' | 'ruim';
-  delivery_notes?: string;
+  answers?: Array<{ question_id: string; question_text: string; question_type: string; answer: any }>;
   created_at?: string;
 }
 
@@ -88,29 +76,25 @@ export interface EditionWithProducts extends Edition {
   products: Products[];
 }
 
+interface QuestionAnswer {
+  question_id: string;
+  question_text: string;
+  question_type: string;
+  answer: any;
+}
+
 export interface CompleteFeedbackData {
   edition_id: string;
   user_email?: string;
   product_feedbacks: Array<{
     product_name: string;
-    experience_rating: number;
-    would_buy: string;
-    product_vibe?: string;
-    main_attraction?: string;
-    what_caught_attention?: string;
+    answers: QuestionAnswer[];
   }>;
   experimentai_feedback: {
-    box_variety_rating: number;
-    box_theme_rating: number;
-    overall_satisfaction: number;
-    would_recommend: boolean;
-    favorite_product?: string;
+    answers: QuestionAnswer[];
   };
   delivery_feedback: {
-    delivery_time_rating: number;
-    packaging_condition: number;
-    delivery_experience: string;
-    final_message?: string;
+    answers: QuestionAnswer[];
   };
   completion_badge: string;
   final_message?: string;
