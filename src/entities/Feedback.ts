@@ -33,7 +33,7 @@ export class Feedback {
 
   static async create(feedbackData: CompleteFeedbackData): Promise<{ success: boolean; sessionId?: string }> {
     try {
-      console.log('Sending feedback to webhook:', feedbackData);
+      console.log('Saving feedback directly to database:', feedbackData);
       
       // Get user info
       let userEmail = feedbackData.user_email || 'anonymous@example.com';
@@ -49,7 +49,7 @@ export class Feedback {
         console.warn('Could not load user, proceeding with anonymous session');
       }
       
-      // 2. Insert into feedback_sessions
+      // 1. Insert into feedback_sessions
       const newSessionId = crypto.randomUUID();
       const { data: sessionData, error: sessionError } = await supabase
         .from('feedback_sessions')
@@ -74,42 +74,46 @@ export class Feedback {
 
       const createdSessionId = sessionData.id;
 
-      // 3. Insert product_feedback
+      // 2. Insert product_feedback
       if (feedbackData.product_feedbacks && feedbackData.product_feedbacks.length > 0) {
         const productFeedbackInserts = feedbackData.product_feedbacks.map(pf => ({
           feedback_session_id: createdSessionId,
           product_name: pf.product_name,
-          answers: pf.answers, // This is the new JSONB column
+          answers: pf.answers,
         }));
+        
         const { error: productError } = await supabase
           .from('product_feedback')
           .insert(productFeedbackInserts);
+          
         if (productError) {
           throw new Error(`Error inserting product feedback: ${productError.message}`);
         }
       }
 
-      // 4. Insert experimentai_feedback
+      // 3. Insert experimentai_feedback
       if (feedbackData.experimentai_feedback) {
         const { error: experimentaiError } = await supabase
           .from('experimentai_feedback')
           .insert({
             feedback_session_id: createdSessionId,
-            answers: feedbackData.experimentai_feedback.answers, // This is the new JSONB column
+            answers: feedbackData.experimentai_feedback.answers,
           });
+          
         if (experimentaiError) {
           throw new Error(`Error inserting experimentai feedback: ${experimentaiError.message}`);
         }
       }
 
-      // 5. Insert delivery_feedback
+      // 4. Insert delivery_feedback
       if (feedbackData.delivery_feedback) {
         const { error: deliveryError } = await supabase
           .from('delivery_feedback')
           .insert({
             feedback_session_id: createdSessionId,
-            answers: feedbackData.delivery_feedback.answers, // This is the new JSONB column
+            answers: feedbackData.delivery_feedback.answers,
           });
+          
         if (deliveryError) {
           throw new Error(`Error inserting delivery feedback: ${deliveryError.message}`);
         }
