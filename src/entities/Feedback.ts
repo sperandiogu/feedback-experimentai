@@ -11,6 +11,8 @@ import type {
 export class Feedback {
   static async hasUserSubmittedFeedback(editionId: string, userEmail: string): Promise<boolean> {
     try {
+      console.log(`Checking if user ${userEmail} already submitted feedback for edition ${editionId}`);
+      
       const { data, error } = await supabase
         .from('feedback_sessions')
         .select('id')
@@ -21,22 +23,36 @@ export class Feedback {
 
       if (error) {
         console.error('Error checking existing feedback:', error);
-        return false; // Allow feedback if we can't check
+        throw error; // Don't allow if we can't verify - safer approach
       }
 
-      return data && data.length > 0;
+      const hasSubmitted = data && data.length > 0;
+      console.log(`User ${userEmail} ${hasSubmitted ? 'has already' : 'has not'} submitted feedback for edition ${editionId}`);
+      return hasSubmitted;
     } catch (error) {
       console.error('Error checking existing feedback:', error);
-      return false; // Allow feedback if we can't check
+      throw error; // Propagate error to handle it properly in the calling code
     }
   }
 
   static async create(feedbackData: CompleteFeedbackData): Promise<{ success: boolean; sessionId?: string }> {
     try {
+      // Double-check: prevent duplicate submissions at backend level
+      const userEmail = feedbackData.user_email || 'anonymous@example.com';
+      
+      try {
+        const hasAlreadySubmitted = await this.hasUserSubmittedFeedback(feedbackData.edition_id, userEmail);
+        if (hasAlreadySubmitted) {
+          throw new Error('Feedback já foi enviado para esta edição. Não é possível enviar novamente.');
+        }
+      } catch (error) {
+        // If verification fails, don't proceed - safety first
+        throw new Error(`Erro ao verificar feedback duplicado: ${error.message}`);
+      }
+      
       console.log('Saving feedback directly to database:', feedbackData);
       
       // Get user info
-      let userEmail = feedbackData.user_email || 'anonymous@example.com';
       let customerId = null;
       
       try {

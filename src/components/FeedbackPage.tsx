@@ -47,11 +47,18 @@ export default function FeedbackPage() {
           
           // Check if user already submitted feedback for this edition
           if (currentUser) {
-            const hasSubmitted = await Feedback.hasUserSubmittedFeedback(
-              editions[0].edition_id, 
-              currentUser.email
-            );
-            setAlreadySubmitted(hasSubmitted);
+            try {
+              const hasSubmitted = await Feedback.hasUserSubmittedFeedback(
+                editions[0].edition_id, 
+                currentUser.email
+              );
+              setAlreadySubmitted(hasSubmitted);
+            } catch (error) {
+              console.error('Error checking if user already submitted feedback:', error);
+              // In case of error checking, we'll show an error message instead of allowing proceed
+              setError('Erro ao verificar se você já enviou feedback para esta edição. Tente novamente.');
+              return;
+            }
           }
         } else {
           setError('Nenhuma edição encontrada para avaliação no momento.');
@@ -170,12 +177,15 @@ export default function FeedbackPage() {
   if (alreadySubmitted) {
     return renderStateCard(
       <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-        <span className="text-white text-lg">✓</span>
+        <span className="text-white text-lg font-bold">✓</span>
       </div>,
-      "Feedback já enviado!",
-      `Você já avaliou a edição "${currentEdition?.edition}". Obrigado pela sua participação!`,
-      "Fazer logout",
-      handleLogout
+      "Você já participou!",
+      `Obrigado! Você já enviou seu feedback para a edição "${currentEdition?.edition}". Cada pessoa pode avaliar apenas uma vez por mês para garantir a qualidade dos dados.`,
+      "Voltar ao início",
+      () => {
+        // Clear any cached data and go back to login
+        window.location.href = '/';
+      }
     );
   }
 
