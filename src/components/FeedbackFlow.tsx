@@ -14,31 +14,38 @@ const cardVariants = {
   exit: { opacity: 0, x: -100, transition: { duration: 0.2 } }
 };
 
-const ProductCard = ({ product, onFeedback, currentIndex, totalProducts, onExit, questions }: any) => {
+const ProductCard = ({ product, onFeedback, currentIndex, totalProducts, onExit }: any) => {
   const [feedback, setFeedback] = useState({
     answers: {} as Record<string, any>
   });
   const [productQuestions, setProductQuestions] = useState<Question[]>([]);
-  const [loadingProductQuestions, setLoadingProductQuestions] = useState(true);
+  const [loadingQuestions, setLoadingQuestions] = useState(true);
 
-  // Load product-specific questions
+  // Load product-specific questions (global + specific to this product)
   React.useEffect(() => {
     loadProductQuestions();
   }, [product.id]);
 
   const loadProductQuestions = async () => {
+    console.log(`Loading questions for product: ${product.name} (ID: ${product.id})`);
     try {
-      setLoadingProductQuestions(true);
-      // Load both global and product-specific questions for this product
-      const productSpecificQuestions = await QuestionsService.getQuestionsByCategoryAndProduct('product', product.id);
-      setProductQuestions(productSpecificQuestions);
+      setLoadingQuestions(true);
+      
+      // This method will return both:
+      // 1. Global questions (product_id = NULL)
+      // 2. Product-specific questions (product_id = product.id)
+      const questionsForThisProduct = await QuestionsService.getQuestionsByCategoryAndProduct('product', product.id);
+      
+      console.log(`Loaded ${questionsForThisProduct.length} questions for product ${product.name}:`, questionsForThisProduct);
+      setProductQuestions(questionsForThisProduct);
     } catch (error) {
       console.error('Error loading product-specific questions:', error);
-      // Fallback to global questions only
+      // Fallback: try to load only global questions if specific loading fails
       const globalQuestions = await QuestionsService.getQuestionsByCategory('product');
+      console.log(`Fallback: loaded ${globalQuestions.length} global questions only`);
       setProductQuestions(globalQuestions);
     } finally {
-      setLoadingProductQuestions(false);
+      setLoadingQuestions(false);
     }
   };
 
@@ -69,13 +76,13 @@ const ProductCard = ({ product, onFeedback, currentIndex, totalProducts, onExit,
     .filter((q: Question) => q.is_required)
     .every((q: Question) => feedback.answers[q.id] !== undefined && feedback.answers[q.id] !== null && feedback.answers[q.id] !== '');
 
-  if (loadingProductQuestions) {
+  if (loadingQuestions) {
     return (
       <motion.div variants={cardVariants} initial="hidden" animate="visible" exit="exit" className="w-full max-w-md mx-auto">
         <Card className="bg-white border-none shadow-xl rounded-3xl overflow-hidden">
           <CardContent className="p-6 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Carregando perguntas...</p>
+            <p className="text-gray-600">Carregando perguntas para {product.name}...</p>
           </CardContent>
         </Card>
       </motion.div>
@@ -333,41 +340,38 @@ const ExitConfirmationModal = ({ onConfirm, onCancel }: any) => {
 export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: any) {
   const [currentStep, setCurrentStep] = useState('products');
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
-  const [questions, setQuestions] = useState<Record<string, Question[]>>({});
-  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const [globalQuestions, setGlobalQuestions] = useState<Record<string, Question[]>>({});
+  const [loadingGlobalQuestions, setLoadingGlobalQuestions] = useState(true);
   const [productFeedbacks, setProductFeedbacks] = useState([]);
   const [experimentaiFeedback, setExperimentaiFeedback] = useState({});
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
 
-  // Load questions on component mount
+  // Load global questions on component mount (for experimentai and delivery)
   React.useEffect(() => {
-    loadQuestions();
+    loadGlobalQuestions();
   }, []);
 
-  const loadQuestions = async () => {
+  const loadGlobalQuestions = async () => {
     try {
-      setLoadingQuestions(true);
-      const [productQuestions, experimentaiQuestions, deliveryQuestions] = await Promise.all([
-        QuestionsService.getQuestionsByCategory('product'),
+      setLoadingGlobalQuestions(true);
+      const [experimentaiQuestions, deliveryQuestions] = await Promise.all([
         QuestionsService.getQuestionsByCategory('experimentai'),
         QuestionsService.getQuestionsByCategory('delivery')
       ]);
 
-      setQuestions({
-        product: productQuestions,
+      setGlobalQuestions({
         experimentai: experimentaiQuestions,
         delivery: deliveryQuestions
       });
     } catch (error) {
-      console.error('Error loading questions:', error);
-      // Fallback to empty arrays if questions fail to load
-      setQuestions({
-        product: [],
+      console.error('Error loading global questions:', error);
+      // Fallback to empty arrays if global questions fail to load
+      setGlobalQuestions({
         experimentai: [],
         delivery: []
       });
     } finally {
-      setLoadingQuestions(false);
+      setLoadingGlobalQuestions(false);
     }
   };
 
@@ -436,7 +440,7 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
     onComplete(completeFeedback);
   };
 
-  if (loadingQuestions) {
+  if (loadingGlobalQuestions) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
@@ -475,7 +479,6 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
                 currentIndex={currentProductIndex}
                 totalProducts={edition.products.length}
                 onExit={handleExitRequest}
-                questions={questions.product || []}
               />
             )}
 
@@ -484,7 +487,7 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
                 onComplete={handleExperimentaiFeedback}
                 edition={edition}
                 onExit={handleExitRequest}
-                questions={questions.experimentai || []}
+                questions={globalQuestions.experimentai || []}
               />
             )}
 
@@ -492,7 +495,7 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
               <DeliveryFeedback
                 onComplete={handleDeliveryFeedback}
                 onExit={handleExitRequest}
-                questions={questions.delivery || []}
+                questions={globalQuestions.delivery || []}
               />
             )}
           </AnimatePresence>

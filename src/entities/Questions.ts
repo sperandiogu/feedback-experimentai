@@ -149,7 +149,13 @@ export class QuestionsService {
   static async getQuestionsByCategoryAndProduct(categoryName: string, productId?: string): Promise<Question[]> {
     try {
       return await withRetry(async () => {
-        // Get global questions (product_id is null) and product-specific questions if productId is provided
+        console.log(`Fetching questions for category: ${categoryName}, productId: ${productId || 'NULL (global only)'}`);
+        
+        // Build the condition for product filtering
+        const productCondition = productId 
+          ? `product_id.is.null,product_id.eq.${productId}` // Global OR specific to this product
+          : 'product_id.is.null'; // Only global questions
+          
         const { data: questions, error } = await supabase
           .from('questions')
           .select(`
@@ -159,14 +165,17 @@ export class QuestionsService {
           `)
           .eq('question_categories.name', categoryName)
           .eq('is_active', true)
-          .or(productId ? `product_id.is.null,product_id.eq.${productId}` : 'product_id.is.null')
+          .or(productCondition)
           .order('order_index');
 
         if (error) {
+          console.error('Database error fetching questions:', error);
           throw error;
         }
 
-        return questions.map((question: any) => ({
+        console.log(`Found ${questions.length} questions in database`);
+        
+        const mappedQuestions = questions.map((question: any) => ({
           id: question.id,
           category_id: question.category_id,
           product_id: question.product_id,
@@ -187,6 +196,13 @@ export class QuestionsService {
               order_index: option.order_index
             })) || []
         }));
+        
+        // Log details about what was found
+        const globalQuestions = mappedQuestions.filter(q => !q.product_id);
+        const specificQuestions = mappedQuestions.filter(q => q.product_id);
+        console.log(`Questions breakdown: ${globalQuestions.length} global, ${specificQuestions.length} product-specific`);
+        
+        return mappedQuestions;
       });
     } catch (error) {
       console.error('Error fetching questions by category and product:', error);
