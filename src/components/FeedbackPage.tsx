@@ -93,14 +93,14 @@ export default function FeedbackPage() {
 
         if (result.success) {
           console.log('Feedback saved successfully:', result.sessionId);
-          
-          // No need to update user data when using webhook
+          // Mark as already submitted to prevent double submission
+          setAlreadySubmitted(true);
         }
       } catch (saveError) {
         console.error('Error sending feedback:', saveError);
         setError('Erro ao enviar feedback. Tente novamente.');
         console.error('Error creating feedback session:', saveError);
-        throw new Error(`Failed to create feedback session: ${saveError.message}`);
+        return; // Don't continue to completion if saving failed
       }
 
       setCompletionBadge(feedbackData.completion_badge);
@@ -114,8 +114,8 @@ export default function FeedbackPage() {
   };
 
   const handleCompletionClose = () => {
-    setShowCompletion(false);
-    window.location.reload();
+    // Redirect to main website after completion
+    window.location.href = 'https://experimentai.com.br';
   };
 
   const handleFeedbackExit = () => {

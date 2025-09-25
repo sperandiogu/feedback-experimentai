@@ -43,11 +43,15 @@ export class Feedback {
       try {
         const hasAlreadySubmitted = await this.hasUserSubmittedFeedback(feedbackData.edition_id, userEmail);
         if (hasAlreadySubmitted) {
-          throw new Error('Feedback já foi enviado para esta edição. Não é possível enviar novamente.');
+          console.error(`Duplicate feedback attempt blocked for user ${userEmail} and edition ${feedbackData.edition_id}`);
+          throw new Error('Você já enviou seu feedback para esta edição. Cada pessoa pode participar apenas uma vez por mês.');
         }
       } catch (error) {
         // If verification fails, don't proceed - safety first
-        throw new Error(`Erro ao verificar feedback duplicado: ${error.message}`);
+        if (error.message.includes('já enviou seu feedback')) {
+          throw error; // Re-throw duplicate feedback error
+        }
+        throw new Error(`Erro ao verificar duplicação de feedback: ${error.message}`);
       }
       
       console.log('Saving feedback directly to database:', feedbackData);

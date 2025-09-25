@@ -337,7 +337,14 @@ const ExitConfirmationModal = ({ onConfirm, onCancel }: any) => {
   );
 };
 
-export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: any) {
+interface FeedbackFlowProps {
+  edition: any;
+  onComplete: (feedbackData: any) => void;
+  onExit: () => void;
+  onLogout: () => void;
+}
+
+export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: FeedbackFlowProps) {
   const [currentStep, setCurrentStep] = useState('products');
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [globalQuestions, setGlobalQuestions] = useState<Record<string, Question[]>>({});
@@ -345,6 +352,7 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
   const [productFeedbacks, setProductFeedbacks] = useState([]);
   const [experimentaiFeedback, setExperimentaiFeedback] = useState({});
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
 
   // Load global questions on component mount (for experimentai and delivery)
   React.useEffect(() => {
@@ -428,6 +436,13 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
   };
 
   const handleDeliveryFeedback = (feedback: any) => {
+    // Prevent double submission
+    if (isSubmittingFeedback) {
+      console.warn('Feedback submission already in progress, ignoring duplicate attempt');
+      return;
+    }
+    
+    setIsSubmittingFeedback(true);
     const completeFeedback = {
       edition_id: edition.edition_id,
       product_feedbacks: productFeedbacks,
