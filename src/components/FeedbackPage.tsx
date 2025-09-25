@@ -31,44 +31,64 @@ export default function FeedbackPage() {
       setLoading(true);
       setError('');
       
+      // Get current user first (for email verification)
+      let userEmail: string | null = null;
       try {
         const user = await User.me();
         setCurrentUser(user);
+        userEmail = user?.email || null;
       } catch (error) {
         console.warn('Could not load user, proceeding with anonymous session');
         setCurrentUser(null);
       }
 
+      // Load current edition
+      let currentEditionData: EditionWithProducts | null = null;
       try {
         const editions = await EditionService.list('-created_at', 1);
         if (editions.length > 0) {
-          setCurrentEdition(editions[0]);
+          currentEditionData = editions[0];
+          setCurrentEdition(currentEditionData);
           setDbConnected(true);
-          
-          // Check if user already submitted feedback for this edition
-          if (currentUser) {
-            try {
-              const hasSubmitted = await Feedback.hasUserSubmittedFeedback(
-                editions[0].edition_id, 
-                currentUser.email
-              );
-              setAlreadySubmitted(hasSubmitted);
-            } catch (error) {
-              console.error('Error checking if user already submitted feedback:', error);
-              // In case of error checking, we'll show an error message instead of allowing proceed
-              setError('Erro ao verificar se você já enviou feedback para esta edição. Tente novamente.');
-              return;
-            }
-          }
         } else {
           setError('Nenhuma edição encontrada para avaliação no momento.');
           setDbConnected(false);
+          return;
         }
       } catch (error) {
         console.error('Error loading editions:', error);
         setError('Erro ao carregar edições. Verifique sua conexão com o banco de dados.');
         setDbConnected(false);
+        return;
       }
+
+      // CRITICAL: Check if feedback already exists BEFORE showing any questions
+      if (currentEditionData && userEmail) {
+        console.log(`Checking for existing feedback: edition=${currentEditionData.edition_id}, user=${userEmail}`);
+        try {
+          const hasSubmitted = await Feedback.hasUserSubmittedFeedback(
+            currentEditionData.edition_id, 
+            userEmail
+          );
+          
+          console.log(`User ${userEmail} ${hasSubmitted ? 'HAS ALREADY' : 'has NOT'} submitted feedback for edition ${currentEditionData.edition}`);
+          setAlreadySubmitted(hasSubmitted);
+          
+          if (hasSubmitted) {
+            console.log('Blocking access: User already submitted feedback for this edition');
+            return; // Stop here - don't load anything else
+          }
+        } catch (error) {
+          console.error('Error checking existing feedback:', error);
+          setError('Erro ao verificar se você já enviou feedback para esta edição. Por segurança, não é possível continuar.');
+          return; // Fail safe - don't allow if we can't verify
+        }
+      } else if (currentEditionData && !userEmail) {
+        // For anonymous users, we could implement IP-based checking or other methods
+        console.warn('Anonymous user detected - cannot check for existing feedback by email');
+        // For now, allow anonymous users to proceed, but this could be adjusted based on requirements
+      }
+
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
       setError('Erro ao carregar seus dados. Por favor, tente novamente.');
@@ -179,12 +199,12 @@ export default function FeedbackPage() {
       <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
         <span className="text-white text-lg font-bold">✓</span>
       </div>,
-      "Você já participou!",
+      "Feedback já enviado!",
       `Obrigado! Você já enviou seu feedback para a edição "${currentEdition?.edition}". Cada pessoa pode avaliar apenas uma vez por mês para garantir a qualidade dos dados.`,
-      "Voltar ao início",
+      "Ir para o site principal",
       () => {
-        // Clear any cached data and go back to login
-        window.location.href = '/';
+        // Redirect to main website
+        window.location.href = 'https://experimentai.com.br';
       }
     );
   }

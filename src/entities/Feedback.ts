@@ -11,7 +11,7 @@ import type {
 export class Feedback {
   static async hasUserSubmittedFeedback(editionId: string, userEmail: string): Promise<boolean> {
     try {
-      console.log(`Checking if user ${userEmail} already submitted feedback for edition ${editionId}`);
+      console.log(`🔍 VERIFICATION: Checking if user ${userEmail} already submitted feedback for edition ${editionId}`);
       
       const { data, error } = await supabase
         .from('feedback_sessions')
@@ -22,15 +22,20 @@ export class Feedback {
         .limit(1);
 
       if (error) {
-        console.error('Error checking existing feedback:', error);
+        console.error('🚨 ERROR checking existing feedback:', error);
         throw error; // Don't allow if we can't verify - safer approach
       }
 
       const hasSubmitted = data && data.length > 0;
-      console.log(`User ${userEmail} ${hasSubmitted ? 'has already' : 'has not'} submitted feedback for edition ${editionId}`);
+      console.log(`🔍 RESULT: User ${userEmail} ${hasSubmitted ? '✅ HAS ALREADY' : '❌ has NOT'} submitted feedback for edition ${editionId}`);
+      
+      if (hasSubmitted) {
+        console.log(`🛑 BLOCKING: User ${userEmail} attempting duplicate feedback for edition ${editionId}`);
+      }
+      
       return hasSubmitted;
     } catch (error) {
-      console.error('Error checking existing feedback:', error);
+      console.error('🚨 CRITICAL ERROR checking existing feedback:', error);
       throw error; // Propagate error to handle it properly in the calling code
     }
   }
