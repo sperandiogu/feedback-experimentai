@@ -97,40 +97,6 @@ export default function LoginPage({ onSignIn, error }: LoginPageProps) {
             </CardContent>
           </Card>
         </motion.div>
-
-        {/* Features Section */}
-        {showFeatures && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-8 grid grid-cols-1 gap-4"
-          >
-            <div className="bg-background/60 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
-                  <Star className="w-5 h-5 text-secondary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground text-sm">Avalie Produtos</h3>
-                  <p className="text-xs text-foreground/80">Compartilhe sua experiência com novos produtos</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-background/60 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-secondary/20 rounded-xl flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-secondary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground text-sm">Acesso Seguro</h3>
-                  <p className="text-xs text-foreground/80">Login protegido apenas para usuários autorizados</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
       </div>
     </div>
   );
