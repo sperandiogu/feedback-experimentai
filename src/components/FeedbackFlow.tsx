@@ -180,10 +180,11 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
         {step !== 'welcome' && (
           <header className="mb-6 sm:mb-8">
             <div className="flex items-center justify-between mb-4 px-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold text-sm">E</div>
-                <span className="font-bold text-secondary">Experimentaí</span>
-              </div>
+              <img
+                src="https://app.experimentai.com.br/LogoTipo.png"
+                alt="ExperimentAI"
+                className="w-32"
+              />
               <Badge variant="secondary" className="bg-primary/20 text-secondary text-sm font-semibold border-none">
                 {Math.round(progress)}%
               </Badge>

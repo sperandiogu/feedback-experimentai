@@ -43,8 +43,8 @@ export class Feedback {
   static async create(feedbackData: CompleteFeedbackData): Promise<{ success: boolean; sessionId?: string }> {
     try {
       // Double-check: prevent duplicate submissions at backend level
-      const userEmail = feedbackData.user_email || 'anonymous@example.com';
-      
+      let userEmail = feedbackData.user_email || 'anonymous@example.com';
+
       try {
         const hasAlreadySubmitted = await this.hasUserSubmittedFeedback(feedbackData.edition_id, userEmail);
         if (hasAlreadySubmitted) {
@@ -58,12 +58,12 @@ export class Feedback {
         }
         throw new Error(`Erro ao verificar duplicação de feedback: ${error.message}`);
       }
-      
+
       console.log('Saving feedback directly to database:', feedbackData);
-      
+
       // Get user info
       let customerId = null;
-      
+
       try {
         const customer = await User.me();
         if (customer) {

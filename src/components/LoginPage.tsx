@@ -41,6 +41,11 @@ export default function LoginPage({ onSignIn, error }: LoginPageProps) {
           <Card className="bg-background/80 backdrop-blur-sm border-none shadow-xl rounded-3xl">
             <CardContent className="p-8">
               <div className="text-center mb-8">
+                <img
+                  src="https://app.experimentai.com.br/LogoTipo.png"
+                  alt="ExperimentAI"
+                  className="w-48 mx-auto mb-6"
+                />
                 <h2 className="text-2xl font-bold text-foreground mb-2">Bem-vindo!</h2>
                 <p className="text-foreground/80">
                   Faça login para avaliar produtos e compartilhar sua experiência
