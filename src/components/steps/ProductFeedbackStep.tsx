@@ -111,7 +111,7 @@ export default function ProductFeedbackStep({
         </div>
         <CardContent className="p-6">
           <div className="text-center mb-6">
-            <div className={`w-full aspect-square max-w-[200px] mx-auto mb-4 rounded-xl flex items-center justify-center overflow-hidden shadow-inner ${!product.image_url ? 'bg-muted/50' : ''}`}>
+            <div className={`w-full aspect-square max-w-[160px] mx-auto mb-4 rounded-xl flex items-center justify-center overflow-hidden`}>
               {product.image_url ? (
                 <img 
                   src={product.image_url} 

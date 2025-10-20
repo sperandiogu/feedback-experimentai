@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['sofia-pro', 'sans-serif'],
+        sans: ['degular', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
