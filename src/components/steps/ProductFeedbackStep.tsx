@@ -5,7 +5,7 @@ import DynamicQuestionRenderer from '../DynamicQuestionRenderer';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, X, Loader2, ChevronLeft } from 'lucide-react';
+import { ChevronRight, X, Loader2, ChevronLeft, Package } from 'lucide-react';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -111,8 +111,16 @@ export default function ProductFeedbackStep({
         </div>
         <CardContent className="p-6">
           <div className="text-center mb-6">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center text-3xl text-secondary">
-              📦
+            <div className="w-full aspect-square max-w-[200px] mx-auto mb-4 rounded-xl bg-muted/50 flex items-center justify-center overflow-hidden shadow-inner">
+              {product.image_url ? (
+                <img 
+                  src={product.image_url} 
+                  alt={product.name} 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <Package className="w-12 h-12 text-foreground/30" />
+              )}
             </div>
             <h2 className="text-xl font-bold text-foreground">{product.name}</h2>
             <p className="text-sm text-foreground/60">{product.brand}</p>
