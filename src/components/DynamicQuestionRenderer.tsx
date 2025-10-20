@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, Heart } from 'lucide-react';
@@ -23,17 +24,19 @@ export default function DynamicQuestionRenderer({
     return (
       <div className="flex justify-center gap-3">
         {emojis.map((item: any) => (
-          <button
+          <motion.button
             key={item.value}
             onClick={() => onChange(item.value)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             className={`p-3 w-14 h-14 flex items-center justify-center rounded-full transition-all duration-200 ${
               value === item.value
                 ? 'bg-purple-600 text-white transform scale-110 shadow-lg'
-                : 'bg-gray-100 hover:bg-gray-200 hover:scale-105'
+                : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
             <span className="text-2xl">{item.emoji}</span>
-          </button>
+          </motion.button>
         ))}
       </div>
     );
@@ -48,9 +51,11 @@ export default function DynamicQuestionRenderer({
     return (
       <div className="flex justify-center gap-1">
         {Array.from({ length: max - min + 1 }, (_, i) => min + i).map((rating) => (
-          <button 
+          <motion.button 
             key={rating} 
             onClick={() => onChange(rating)} 
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             className="p-1"
           >
             <IconComponent 
@@ -60,7 +65,7 @@ export default function DynamicQuestionRenderer({
                   : 'text-gray-300'
               }`} 
             />
-          </button>
+          </motion.button>
         ))}
       </div>
     );
@@ -73,15 +78,17 @@ export default function DynamicQuestionRenderer({
     return (
       <div className={isGrid ? "grid grid-cols-2 gap-3" : "flex flex-col sm:flex-row gap-2"}>
         {options.map((option) => (
-          <button
+          <motion.button
             key={option.option_value}
             onClick={() => onChange(option.option_value)}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             className={`${
               isGrid 
                 ? `p-3 rounded-xl transition-all duration-200 flex flex-col items-center gap-1 ${
                     value === option.option_value
                       ? 'bg-purple-600 text-white transform scale-105 shadow-lg'
-                      : 'bg-gray-100 hover:bg-gray-200 hover:scale-105'
+                      : 'bg-gray-100 hover:bg-gray-200'
                   }`
                 : `flex-1 text-base py-3 sm:py-2 rounded-full ${
                     value === option.option_value
@@ -96,7 +103,7 @@ export default function DynamicQuestionRenderer({
             <span className={isGrid ? "text-sm font-medium" : ""}>
               {option.option_label}
             </span>
-          </button>
+          </motion.button>
         ))}
       </div>
     );
@@ -109,6 +116,7 @@ export default function DynamicQuestionRenderer({
     return (
       <div className="flex flex-col sm:flex-row gap-2">
         <Button
+          asChild
           onClick={() => onChange(true)}
           variant={value === true ? "default" : "outline"}
           className={`flex-1 text-base py-3 rounded-full ${
@@ -117,9 +125,10 @@ export default function DynamicQuestionRenderer({
               : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
           }`}
         >
-          {trueLabel}
+          <motion.div whileTap={{ scale: 0.95 }}>{trueLabel}</motion.div>
         </Button>
         <Button
+          asChild
           onClick={() => onChange(false)}
           variant={value === false ? "default" : "outline"}
           className={`flex-1 text-base py-3 rounded-full ${
@@ -128,7 +137,7 @@ export default function DynamicQuestionRenderer({
               : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
           }`}
         >
-          {falseLabel}
+          <motion.div whileTap={{ scale: 0.95 }}>{falseLabel}</motion.div>
         </Button>
       </div>
     );
