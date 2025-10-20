@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { Question } from '@/entities/Questions';
 import DynamicQuestionRenderer from '../DynamicQuestionRenderer';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, X, Sparkles } from 'lucide-react';
+import { ChevronRight, X, Sparkles, ChevronLeft } from 'lucide-react';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -19,8 +19,10 @@ interface GeneralFeedbackStepProps {
   questions: Question[];
   onComplete: (feedback: any) => void;
   onExitRequest: () => void;
+  onBack: () => void;
   isFinalStep?: boolean;
   editionName?: string;
+  initialAnswers?: any[];
 }
 
 export default function GeneralFeedbackStep({
@@ -30,10 +32,22 @@ export default function GeneralFeedbackStep({
   questions,
   onComplete,
   onExitRequest,
+  onBack,
   isFinalStep = false,
-  editionName
+  editionName,
+  initialAnswers
 }: GeneralFeedbackStepProps) {
   const [answers, setAnswers] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (initialAnswers) {
+      const initialData = initialAnswers.reduce((acc, ans) => {
+        acc[ans.question_id] = ans.answer;
+        return acc;
+      }, {});
+      setAnswers(initialData);
+    }
+  }, [initialAnswers]);
 
   const handleAnswerChange = (questionId: string, value: any) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -90,10 +104,20 @@ export default function GeneralFeedbackStep({
             ))}
           </div>
 
-          <Button onClick={handleSubmit} disabled={!isComplete} className="w-full mt-8 bg-purple-600 hover:bg-purple-700 text-base py-3 rounded-full shadow-md hover:shadow-lg disabled:shadow-none disabled:bg-gray-300">
-            {isFinalStep ? 'Finalizar Feedback' : 'Continuar'}
-            {isFinalStep ? <Sparkles className="w-5 h-5 ml-2" /> : <ChevronRight className="w-5 h-5 ml-1" />}
-          </Button>
+          <div className="w-full mt-8 flex items-center gap-3">
+            <Button
+              onClick={onBack}
+              variant="ghost"
+              className="text-gray-600 hover:text-gray-800 rounded-full"
+            >
+              <ChevronLeft className="w-5 h-5 mr-1" />
+              Voltar
+            </Button>
+            <Button onClick={handleSubmit} disabled={!isComplete} className="flex-1 bg-purple-600 hover:bg-purple-700 text-base py-3 rounded-full shadow-md hover:shadow-lg disabled:shadow-none disabled:bg-gray-300">
+              {isFinalStep ? 'Finalizar Feedback' : 'Continuar'}
+              {isFinalStep ? <Sparkles className="w-5 h-5 ml-2" /> : <ChevronRight className="w-5 h-5 ml-1" />}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </motion.div>

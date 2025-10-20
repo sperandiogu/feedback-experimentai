@@ -4,7 +4,7 @@ import { QuestionsService, type Question } from '@/entities/Questions';
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { X, Loader2, Package, Truck } from 'lucide-react';
+import { X, Loader2, Package, Truck, ChevronLeft } from 'lucide-react';
 
 // Import new step components
 import WelcomeStep from './steps/WelcomeStep';
@@ -107,8 +107,22 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
 
   const handleStart = () => setStep('products');
 
+  const handleBack = () => {
+    if (isSubmitting) return;
+
+    if (step === 'delivery') {
+      setStep('experimentai');
+    } else if (step === 'experimentai') {
+      setCurrentProductIndex(edition.products.length - 1);
+      setStep('products');
+    } else if (step === 'products' && currentProductIndex > 0) {
+      setCurrentProductIndex(prev => prev - 1);
+    }
+  };
+
   const handleProductFeedback = (productFeedback: any) => {
-    const updatedFeedbacks = [...feedback.product_feedbacks, productFeedback];
+    const updatedFeedbacks = [...feedback.product_feedbacks];
+    updatedFeedbacks[currentProductIndex] = productFeedback;
     setFeedback(prev => ({ ...prev, product_feedbacks: updatedFeedbacks }));
 
     if (currentProductIndex < edition.products.length - 1) {
@@ -147,6 +161,7 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
     step === 'experimentai' ? edition.products.length :
     edition.products.length + 1;
   const progress = ((progressIndex + 1) / totalSteps) * 100;
+  const canGoBack = step === 'delivery' || step === 'experimentai' || (step === 'products' && currentProductIndex > 0);
 
   if (loading) {
     return (
@@ -196,6 +211,9 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
                 currentIndex={currentProductIndex}
                 totalProducts={edition.products.length}
                 onExitRequest={() => setShowExitModal(true)}
+                onBack={handleBack}
+                canGoBack={canGoBack}
+                initialAnswers={feedback.product_feedbacks[currentProductIndex]?.answers}
               />
             )}
 
@@ -209,6 +227,8 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
                 onComplete={handleExperimentaiFeedback}
                 onExitRequest={() => setShowExitModal(true)}
                 editionName={edition.edition}
+                onBack={handleBack}
+                initialAnswers={feedback.experimentai_feedback?.answers}
               />
             )}
 
@@ -222,6 +242,8 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
                 onComplete={handleDeliveryFeedback}
                 onExitRequest={() => setShowExitModal(true)}
                 isFinalStep
+                onBack={handleBack}
+                initialAnswers={feedback.delivery_feedback?.answers}
               />
             )}
           </AnimatePresence>

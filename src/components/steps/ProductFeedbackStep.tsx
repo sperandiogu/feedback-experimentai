@@ -5,7 +5,7 @@ import DynamicQuestionRenderer from '../DynamicQuestionRenderer';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, X, Loader2 } from 'lucide-react';
+import { ChevronRight, X, Loader2, ChevronLeft } from 'lucide-react';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -19,12 +19,34 @@ interface ProductFeedbackStepProps {
   currentIndex: number;
   totalProducts: number;
   onExitRequest: () => void;
+  onBack: () => void;
+  canGoBack: boolean;
+  initialAnswers?: any[];
 }
 
-export default function ProductFeedbackStep({ product, onComplete, currentIndex, totalProducts, onExitRequest }: ProductFeedbackStepProps) {
+export default function ProductFeedbackStep({ 
+  product, 
+  onComplete, 
+  currentIndex, 
+  totalProducts, 
+  onExitRequest,
+  onBack,
+  canGoBack,
+  initialAnswers
+}: ProductFeedbackStepProps) {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (initialAnswers) {
+      const initialData = initialAnswers.reduce((acc, ans) => {
+        acc[ans.question_id] = ans.answer;
+        return acc;
+      }, {});
+      setAnswers(initialData);
+    }
+  }, [initialAnswers]);
 
   useEffect(() => {
     const loadQuestions = async () => {
@@ -34,7 +56,6 @@ export default function ProductFeedbackStep({ product, onComplete, currentIndex,
         setQuestions(productQuestions);
       } catch (error) {
         console.error(`Error loading questions for product ${product.name}:`, error);
-        // Optionally, set an error state to show in the UI
       } finally {
         setLoading(false);
       }
@@ -111,8 +132,20 @@ export default function ProductFeedbackStep({ product, onComplete, currentIndex,
           </div>
 
           <div className="mt-8 flex justify-between items-center">
+            <div>
+              {canGoBack && (
+                <Button
+                  onClick={onBack}
+                  variant="ghost"
+                  className="text-gray-600 hover:text-gray-800 rounded-full"
+                >
+                  <ChevronLeft className="w-5 h-5 mr-1" />
+                  Voltar
+                </Button>
+              )}
+            </div>
             <span className="text-sm font-medium text-gray-500">
-              Produto {currentIndex + 1} de {totalProducts}
+              {currentIndex + 1} / {totalProducts}
             </span>
             <Button
               onClick={handleNext}
