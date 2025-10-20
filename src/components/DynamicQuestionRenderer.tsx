@@ -31,7 +31,7 @@ export default function DynamicQuestionRenderer({
             whileTap={{ scale: 0.95 }}
             className={`p-3 w-14 h-14 flex items-center justify-center rounded-full transition-all duration-200 ${
               value === item.value
-                ? 'bg-purple-600 text-white transform scale-110 shadow-lg'
+                ? 'bg-primary text-primary-foreground transform scale-110 shadow-lg'
                 : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
@@ -61,7 +61,7 @@ export default function DynamicQuestionRenderer({
             <IconComponent 
               className={`w-8 h-8 transition-colors ${
                 rating <= value 
-                  ? 'fill-purple-500 text-purple-500' 
+                  ? 'fill-accent text-accent' 
                   : 'text-gray-300'
               }`} 
             />
@@ -87,12 +87,12 @@ export default function DynamicQuestionRenderer({
               isGrid 
                 ? `p-3 rounded-xl transition-all duration-200 flex flex-col items-center gap-1 ${
                     value === option.option_value
-                      ? 'bg-purple-600 text-white transform scale-105 shadow-lg'
+                      ? 'bg-primary text-primary-foreground transform scale-105 shadow-lg'
                       : 'bg-gray-100 hover:bg-gray-200'
                   }`
                 : `flex-1 text-base py-3 sm:py-2 rounded-full ${
                     value === option.option_value
-                      ? 'bg-purple-600 text-white hover:bg-purple-700'
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                       : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`
             }`}
@@ -121,7 +121,7 @@ export default function DynamicQuestionRenderer({
           variant={value === true ? "default" : "outline"}
           className={`flex-1 text-base py-3 rounded-full ${
             value === true
-              ? 'bg-purple-600 text-white hover:bg-purple-700'
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
               : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
           }`}
         >
@@ -133,7 +133,7 @@ export default function DynamicQuestionRenderer({
           variant={value === false ? "default" : "outline"}
           className={`flex-1 text-base py-3 rounded-full ${
             value === false
-              ? 'bg-purple-600 text-white hover:bg-purple-700'
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
               : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
           }`}
         >

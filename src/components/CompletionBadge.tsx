@@ -28,22 +28,22 @@ export default function CompletionBadge({ badge, onClose }: any) {
       >
         <div className="absolute inset-0 overflow-hidden">{confettiElements}</div>
         
-        <Card className="bg-white border-none shadow-2xl rounded-3xl w-full">
+        <Card className="bg-background border-none shadow-2xl rounded-3xl w-full">
           <CardContent className="p-8 text-center relative z-10">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1, rotate: [0, -10, 10, -5, 5, 0] }}
               transition={{ delay: 0.3, type: "tween", duration: 0.6 }}
-              className="w-24 h-24 mx-auto mb-6 rounded-full bg-purple-600 flex items-center justify-center shadow-lg"
+              className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary flex items-center justify-center shadow-lg"
             >
-              <Trophy className="w-12 h-12 text-white" />
+              <Trophy className="w-12 h-12 text-primary-foreground" />
             </motion.div>
 
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-2xl font-bold text-gray-800 mb-2"
+              className="text-2xl font-bold text-foreground mb-2"
             >
               Feedback Enviado!
             </motion.h2>
@@ -52,7 +52,7 @@ export default function CompletionBadge({ badge, onClose }: any) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="text-gray-600 mb-6"
+              className="text-foreground/80 mb-6"
             >
               Obrigado! Sua opinião é super importante para nós e para as marcas.
             </motion.p>
@@ -63,7 +63,7 @@ export default function CompletionBadge({ badge, onClose }: any) {
               transition={{ delay: 0.9 }}
               className="mb-8"
             >
-              <div className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-base font-semibold inline-block">
+              <div className="bg-secondary text-secondary-foreground px-4 py-2 rounded-full text-base font-semibold inline-block">
                 {badge}
               </div>
             </motion.div>
@@ -75,7 +75,7 @@ export default function CompletionBadge({ badge, onClose }: any) {
             >
               <Button 
                 onClick={onClose}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 <Sparkles className="w-5 h-5 mr-2" />
                 Voltar ao site

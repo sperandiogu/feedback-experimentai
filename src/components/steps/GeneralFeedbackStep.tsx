@@ -70,25 +70,25 @@ export default function GeneralFeedbackStep({
 
   return (
     <motion.div variants={cardVariants} initial="hidden" animate="visible" exit="exit" className="w-full max-w-md mx-auto">
-      <Card className="bg-white border-none shadow-xl rounded-3xl overflow-hidden">
+      <Card className="bg-background border-none shadow-xl rounded-3xl overflow-hidden">
         <div className="flex justify-between items-center p-4 pb-0">
           <Button
             onClick={onExitRequest}
             variant="ghost"
             size="sm"
-            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2"
+            className="text-foreground/40 hover:text-foreground/60 hover:bg-gray-100/50 rounded-full p-2"
           >
             <X className="w-4 h-4" />
           </Button>
-          <span className="text-xs text-gray-400">ESC para sair</span>
+          <span className="text-xs text-foreground/40">ESC para sair</span>
         </div>
         <CardContent className="p-6">
           <div className="text-center mb-6">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-purple-100 flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               {icon}
             </div>
-            <h2 className="text-xl font-bold text-gray-800">{title}</h2>
-            <p className="text-sm text-gray-500">{subtitle}</p>
+            <h2 className="text-xl font-bold text-foreground">{title}</h2>
+            <p className="text-sm text-foreground/60">{subtitle}</p>
           </div>
 
           <div className="space-y-8">
@@ -108,12 +108,12 @@ export default function GeneralFeedbackStep({
             <Button
               onClick={onBack}
               variant="ghost"
-              className="text-gray-600 hover:text-gray-800 rounded-full"
+              className="text-foreground/80 hover:text-foreground rounded-full"
             >
               <ChevronLeft className="w-5 h-5 mr-1" />
               Voltar
             </Button>
-            <Button onClick={handleSubmit} disabled={!isComplete} className="flex-1 bg-purple-600 hover:bg-purple-700 text-base py-3 rounded-full shadow-md hover:shadow-lg disabled:shadow-none disabled:bg-gray-300">
+            <Button onClick={handleSubmit} disabled={!isComplete} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-base py-3 rounded-full shadow-md hover:shadow-lg disabled:shadow-none disabled:bg-gray-300">
               {isFinalStep ? 'Finalizar Feedback' : 'Continuar'}
               {isFinalStep ? <Sparkles className="w-5 h-5 ml-2" /> : <ChevronRight className="w-5 h-5 ml-1" />}
             </Button>

@@ -18,16 +18,16 @@ const ExitConfirmationModal = ({ onConfirm, onCancel }: any) => {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+        className="bg-background rounded-2xl p-6 max-w-sm w-full shadow-2xl"
       >
         <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <X className="w-8 h-8 text-red-600" />
+          <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <X className="w-8 h-8 text-destructive" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
             Sair do feedback?
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-foreground/80 mb-6">
             Seu progresso será perdido. Tem certeza que deseja sair?
           </p>
           <div className="flex gap-3">
@@ -165,30 +165,30 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600">Carregando tudo...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-secondary mx-auto mb-4" />
+          <p className="text-foreground/80">Carregando tudo...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 font-sans">
+    <div className="min-h-screen bg-background p-4 font-sans">
       <div className="max-w-md mx-auto pt-4 sm:pt-8">
         {step !== 'welcome' && (
           <header className="mb-6 sm:mb-8">
             <div className="flex items-center justify-between mb-4 px-2">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">E</div>
-                <span className="font-bold text-purple-600">Experimentaí</span>
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold text-sm">E</div>
+                <span className="font-bold text-secondary">Experimentaí</span>
               </div>
-              <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-sm font-semibold border-none">
+              <Badge variant="secondary" className="bg-primary/20 text-secondary text-sm font-semibold border-none">
                 {Math.round(progress)}%
               </Badge>
             </div>
-            <Progress value={progress} className="h-2 bg-gray-200 [&>div]:bg-purple-600" />
+            <Progress value={progress} className="h-2 bg-gray-200 [&>div]:bg-primary" />
           </header>
         )}
 
@@ -222,7 +222,7 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
                 key="experimentai"
                 title="Sobre a Experimentaí"
                 subtitle="Sua experiência com a nossa box!"
-                icon={<Package className="w-10 h-10 text-purple-600" />}
+                icon={<Package className="w-10 h-10 text-secondary" />}
                 questions={generalQuestions.experimentai || []}
                 onComplete={handleExperimentaiFeedback}
                 onExitRequest={() => setShowExitModal(true)}
@@ -237,7 +237,7 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
                 key="delivery"
                 title="Sobre a entrega"
                 subtitle="Quase lá! Como foi receber sua box?"
-                icon={<Truck className="w-10 h-10 text-purple-600" />}
+                icon={<Truck className="w-10 h-10 text-secondary" />}
                 questions={generalQuestions.delivery || []}
                 onComplete={handleDeliveryFeedback}
                 onExitRequest={() => setShowExitModal(true)}

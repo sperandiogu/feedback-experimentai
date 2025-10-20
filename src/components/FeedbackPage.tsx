@@ -147,18 +147,18 @@ export default function FeedbackPage() {
   };
 
   const renderStateCard = (icon: React.ReactNode, title: string, message: string, buttonText: string | null = null, buttonAction: (() => void) | null = null) => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="bg-white border-none shadow-xl max-w-sm w-full rounded-3xl">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="bg-background border-none shadow-xl max-w-sm w-full rounded-3xl">
         <CardContent className="p-8 text-center">
-          <div className="w-16 h-16 bg-purple-100 rounded-full mx-auto flex items-center justify-center mb-6">
+          <div className="w-16 h-16 bg-primary/20 rounded-full mx-auto flex items-center justify-center mb-6">
             {icon}
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">{title}</h2>
-          <p className="text-gray-600 mb-6">{message}</p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">{title}</h2>
+          <p className="text-foreground/80 mb-6">{message}</p>
           {buttonText && (
             <Button 
               onClick={buttonAction}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-base py-3 rounded-full"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-base py-3 rounded-full"
             >
               {buttonText}
             </Button>
@@ -170,7 +170,7 @@ export default function FeedbackPage() {
 
   if (loading) {
     return renderStateCard(
-      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />,
+      <Loader2 className="w-8 h-8 animate-spin text-secondary" />,
       "Carregando sua edição...",
       "Preparando tudo para você avaliar os produtos!"
     );
@@ -178,7 +178,7 @@ export default function FeedbackPage() {
 
   if (error) {
     return renderStateCard(
-      <AlertCircle className="w-8 h-8 text-red-500" />,
+      <AlertCircle className="w-8 h-8 text-destructive" />,
       "Ops! Algo deu errado",
       error,
       "Tentar novamente",
@@ -188,7 +188,7 @@ export default function FeedbackPage() {
 
   if (!currentEdition) {
     return renderStateCard(
-      <Package className="w-8 h-8 text-purple-600" />,
+      <Package className="w-8 h-8 text-secondary" />,
       "Nenhuma edição para avaliar",
       "Fique de olho! Sua próxima edição para avaliação aparecerá aqui em breve."
     );
@@ -196,8 +196,8 @@ export default function FeedbackPage() {
 
   if (alreadySubmitted) {
     return renderStateCard(
-      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-        <span className="text-white text-lg font-bold">✓</span>
+      <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+        <span className="text-secondary-foreground text-lg font-bold">✓</span>
       </div>,
       "Feedback já enviado!",
       `Obrigado! Você já enviou seu feedback para a edição "${currentEdition?.edition}". Cada pessoa pode avaliar apenas uma vez por mês para garantir a qualidade dos dados.`,

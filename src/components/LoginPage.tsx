@@ -30,7 +30,7 @@ export default function LoginPage({ onSignIn, error }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Main Login Card */}
         <motion.div
@@ -38,11 +38,11 @@ export default function LoginPage({ onSignIn, error }: LoginPageProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <Card className="bg-white/80 backdrop-blur-sm border-none shadow-xl rounded-3xl">
+          <Card className="bg-background/80 backdrop-blur-sm border-none shadow-xl rounded-3xl">
             <CardContent className="p-8">
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Bem-vindo!</h2>
-                <p className="text-gray-600">
+                <h2 className="text-2xl font-bold text-foreground mb-2">Bem-vindo!</h2>
+                <p className="text-foreground/80">
                   Faça login para avaliar produtos e compartilhar sua experiência
                 </p>
               </div>
@@ -51,12 +51,12 @@ export default function LoginPage({ onSignIn, error }: LoginPageProps) {
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3"
+                  className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-3"
                 >
-                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
                   <div className="text-sm">
-                    <p className="font-medium text-red-800">Erro no login</p>
-                    <p className="text-red-600">{error}</p>
+                    <p className="font-medium text-destructive">Erro no login</p>
+                    <p className="text-destructive/80">{error}</p>
                   </div>
                 </motion.div>
               )}
@@ -85,7 +85,7 @@ export default function LoginPage({ onSignIn, error }: LoginPageProps) {
               </Button>
 
               <div className="mt-6 text-center">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-foreground/60">
                   Ao fazer login, você concorda com nossos termos de uso
                 </p>
               </div>
@@ -101,26 +101,26 @@ export default function LoginPage({ onSignIn, error }: LoginPageProps) {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-8 grid grid-cols-1 gap-4"
           >
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+            <div className="bg-background/60 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Star className="w-5 h-5 text-purple-600" />
+                <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
+                  <Star className="w-5 h-5 text-secondary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800 text-sm">Avalie Produtos</h3>
-                  <p className="text-xs text-gray-600">Compartilhe sua experiência com novos produtos</p>
+                  <h3 className="font-semibold text-foreground text-sm">Avalie Produtos</h3>
+                  <p className="text-xs text-foreground/80">Compartilhe sua experiência com novos produtos</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+            <div className="bg-background/60 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-green-600" />
+                <div className="w-10 h-10 bg-secondary/20 rounded-xl flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-secondary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800 text-sm">Acesso Seguro</h3>
-                  <p className="text-xs text-gray-600">Login protegido apenas para usuários autorizados</p>
+                  <h3 className="font-semibold text-foreground text-sm">Acesso Seguro</h3>
+                  <p className="text-xs text-foreground/80">Login protegido apenas para usuários autorizados</p>
                 </div>
               </div>
             </div>

@@ -85,10 +85,10 @@ export default function ProductFeedbackStep({
   if (loading) {
     return (
       <motion.div variants={cardVariants} initial="hidden" animate="visible" exit="exit" className="w-full max-w-md mx-auto">
-        <Card className="bg-white border-none shadow-xl rounded-3xl">
+        <Card className="bg-background border-none shadow-xl rounded-3xl">
           <CardContent className="p-6 text-center h-96 flex flex-col items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-600 mb-4" />
-            <p className="text-gray-600">Carregando perguntas para {product.name}...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-secondary mb-4" />
+            <p className="text-foreground/80">Carregando perguntas para {product.name}...</p>
           </CardContent>
         </Card>
       </motion.div>
@@ -97,26 +97,26 @@ export default function ProductFeedbackStep({
 
   return (
     <motion.div variants={cardVariants} initial="hidden" animate="visible" exit="exit" className="w-full max-w-md mx-auto">
-      <Card className="bg-white border-none shadow-xl rounded-3xl overflow-hidden">
+      <Card className="bg-background border-none shadow-xl rounded-3xl overflow-hidden">
         <div className="flex justify-between items-center p-4 pb-0">
           <Button
             onClick={onExitRequest}
             variant="ghost"
             size="sm"
-            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2"
+            className="text-foreground/40 hover:text-foreground/60 hover:bg-gray-100/50 rounded-full p-2"
           >
             <X className="w-4 h-4" />
           </Button>
-          <span className="text-xs text-gray-400">ESC para sair</span>
+          <span className="text-xs text-foreground/40">ESC para sair</span>
         </div>
         <CardContent className="p-6">
           <div className="text-center mb-6">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-purple-100 flex items-center justify-center text-3xl text-purple-600">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center text-3xl text-secondary">
               📦
             </div>
-            <h2 className="text-xl font-bold text-gray-800">{product.name}</h2>
-            <p className="text-sm text-gray-500">{product.brand}</p>
-            <Badge variant="secondary" className="mt-2 bg-purple-100 text-purple-700 border-none">{product.category}</Badge>
+            <h2 className="text-xl font-bold text-foreground">{product.name}</h2>
+            <p className="text-sm text-foreground/60">{product.brand}</p>
+            <Badge variant="secondary" className="mt-2 bg-primary/20 text-secondary border-none">{product.category}</Badge>
           </div>
 
           <div className="space-y-8">
@@ -137,20 +137,20 @@ export default function ProductFeedbackStep({
                 <Button
                   onClick={onBack}
                   variant="ghost"
-                  className="text-gray-600 hover:text-gray-800 rounded-full"
+                  className="text-foreground/80 hover:text-foreground rounded-full"
                 >
                   <ChevronLeft className="w-5 h-5 mr-1" />
                   Voltar
                 </Button>
               )}
             </div>
-            <span className="text-sm font-medium text-gray-500">
+            <span className="text-sm font-medium text-foreground/60">
               {currentIndex + 1} / {totalProducts}
             </span>
             <Button
               onClick={handleNext}
               disabled={!isComplete}
-              className="bg-purple-600 hover:bg-purple-700 text-base py-3 px-6 rounded-full shadow-md hover:shadow-lg disabled:shadow-none disabled:bg-gray-300"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-base py-3 px-6 rounded-full shadow-md hover:shadow-lg disabled:shadow-none disabled:bg-gray-300"
             >
               Próximo <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
