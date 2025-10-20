@@ -103,7 +103,7 @@ export default function ProductFeedbackStep({
             onClick={onExitRequest}
             variant="ghost"
             size="sm"
-            className="text-foreground/40 hover:text-foreground/60 hover:bg-gray-100/50 rounded-full p-2"
+            className="text-foreground/40 hover:text-foreground/60 hover:bg-muted/50 rounded-full p-2"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -150,7 +150,7 @@ export default function ProductFeedbackStep({
             <Button
               onClick={handleNext}
               disabled={!isComplete}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground text-base py-3 px-6 rounded-full shadow-md hover:shadow-lg disabled:shadow-none disabled:bg-gray-300"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-base py-3 px-6 rounded-full shadow-md hover:shadow-lg disabled:shadow-none disabled:bg-muted"
             >
               Próximo <ChevronRight className="w-5 h-5 ml-1" />
             </Button>

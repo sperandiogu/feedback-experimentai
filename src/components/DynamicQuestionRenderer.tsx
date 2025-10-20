@@ -32,7 +32,7 @@ export default function DynamicQuestionRenderer({
             className={`p-3 w-14 h-14 flex items-center justify-center rounded-full transition-all duration-200 ${
               value === item.value
                 ? 'bg-primary text-primary-foreground transform scale-110 shadow-lg'
-                : 'bg-gray-100 hover:bg-gray-200'
+                : 'bg-muted hover:bg-muted/90'
             }`}
           >
             <span className="text-2xl">{item.emoji}</span>
@@ -62,7 +62,7 @@ export default function DynamicQuestionRenderer({
               className={`w-8 h-8 transition-colors ${
                 rating <= value 
                   ? 'fill-accent text-accent' 
-                  : 'text-gray-300'
+                  : 'text-border'
               }`} 
             />
           </motion.button>
@@ -88,12 +88,12 @@ export default function DynamicQuestionRenderer({
                 ? `p-3 rounded-xl transition-all duration-200 flex flex-col items-center gap-1 ${
                     value === option.option_value
                       ? 'bg-primary text-primary-foreground transform scale-105 shadow-lg'
-                      : 'bg-gray-100 hover:bg-gray-200'
+                      : 'bg-muted hover:bg-muted/90'
                   }`
                 : `flex-1 text-base py-3 sm:py-2 rounded-full ${
                     value === option.option_value
                       ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      : 'bg-background border text-foreground/80 hover:bg-muted'
                   }`
             }`}
           >
@@ -122,7 +122,7 @@ export default function DynamicQuestionRenderer({
           className={`flex-1 text-base py-3 rounded-full ${
             value === true
               ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              : 'bg-background border text-foreground/80 hover:bg-muted'
           }`}
         >
           <motion.div whileTap={{ scale: 0.95 }}>{trueLabel}</motion.div>
@@ -134,7 +134,7 @@ export default function DynamicQuestionRenderer({
           className={`flex-1 text-base py-3 rounded-full ${
             value === false
               ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              : 'bg-background border text-foreground/80 hover:bg-muted'
           }`}
         >
           <motion.div whileTap={{ scale: 0.95 }}>{falseLabel}</motion.div>
@@ -152,7 +152,7 @@ export default function DynamicQuestionRenderer({
         placeholder={placeholder}
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
-        className="text-sm rounded-xl border-gray-200"
+        className="text-sm rounded-xl border-input"
         rows={rows}
       />
     );
