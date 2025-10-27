@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import LoginPage from './LoginPage';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
-  const { user, isAuthorized, loading, error, signInWithGoogle, signOut } = useAuth();
+  const { user, isAuthorized, loading, error, signIn, signOut } = useAuth();
 
   console.log('AuthWrapper state:', { user: !!user, isAuthorized, loading, error });
 
@@ -19,7 +19,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   }
 
   if (!user) {
-    return <LoginPage onSignIn={signInWithGoogle} error={error} />;
+    return <LoginPage onSignIn={signIn} error={error} />;
   }
 
   if (!isAuthorized) {

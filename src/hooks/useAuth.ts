@@ -1,69 +1,73 @@
 import { useState, useEffect } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
 import { supabase } from '../lib/supabase';
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        setLoading(true);
-        if (firebaseUser) {
-          setUser(firebaseUser);
-          
-          // Check if user email exists in customer table (active subscription)
-          const { data, error: supabaseError } = await supabase
-            .from('customer')
-            .select('email')
-            .eq('email', firebaseUser.email)
-            .single();
-
-          if (supabaseError || !data) {
-            setIsAuthorized(false);
-            setError('Sua assinatura está inativa. Entre em contato conosco para reativar seu acesso.');
-          } else {
-            setIsAuthorized(true);
-            setError('');
-          }
-        } else {
-          setUser(null);
-          setIsAuthorized(false);
-          setError('');
-        }
-      } catch (err) {
-        console.error('Auth state change error:', err);
-        setError('Erro ao verificar status da assinatura');
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
+    const storedEmail = localStorage.getItem('user_email');
+    if (storedEmail) {
+      validateEmail(storedEmail);
+    } else {
+      setLoading(false);
+    }
   }, []);
 
-  const signInWithGoogle = async () => {
+  const validateEmail = async (email: string) => {
     try {
       setLoading(true);
       setError('');
-      await signInWithPopup(auth, googleProvider);
-    } catch (err: any) {
-      console.error('Sign in error:', err);
-      setError('Erro ao fazer login com Google');
+
+      const { data, error: supabaseError } = await supabase
+        .from('customer')
+        .select('email, customer_id, name')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (supabaseError) {
+        console.error('Error checking customer:', supabaseError);
+        setError('Erro ao validar email. Tente novamente.');
+        setIsAuthorized(false);
+        setUserEmail(null);
+        localStorage.removeItem('user_email');
+        return;
+      }
+
+      if (!data) {
+        setError('Email não encontrado. Você precisa ter uma assinatura ativa para acessar.');
+        setIsAuthorized(false);
+        setUserEmail(null);
+        localStorage.removeItem('user_email');
+        return;
+      }
+
+      setUserEmail(email);
+      setIsAuthorized(true);
+      setError('');
+      localStorage.setItem('user_email', email);
+    } catch (err) {
+      console.error('Validation error:', err);
+      setError('Erro ao verificar assinatura');
+      setIsAuthorized(false);
+      setUserEmail(null);
+      localStorage.removeItem('user_email');
     } finally {
       setLoading(false);
     }
   };
 
+  const signIn = async (email: string) => {
+    await validateEmail(email);
+  };
+
   const signOut = async () => {
     try {
       setLoading(true);
-      await firebaseSignOut(auth);
-      setUser(null);
+      localStorage.removeItem('user_email');
+      setUserEmail(null);
       setIsAuthorized(false);
       setError('');
     } catch (err: any) {
@@ -74,12 +78,12 @@ export const useAuth = () => {
     }
   };
 
-  return { 
-    user, 
-    isAuthorized, 
-    loading, 
-    error, 
-    signInWithGoogle, 
-    signOut 
+  return {
+    user: userEmail ? { email: userEmail } : null,
+    isAuthorized,
+    loading,
+    error,
+    signIn,
+    signOut
   };
 };
