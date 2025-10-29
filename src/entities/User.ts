@@ -6,26 +6,27 @@ export class User {
   static async me(): Promise<Customer | null> {
     try {
       return await withRetry(async () => {
-        // Get Firebase user instead of Supabase user
-        const firebaseUser = auth.currentUser;
-        
-        if (!firebaseUser || !firebaseUser.email) {
-          console.warn('No Firebase user found or no email');
+        // Get email from localStorage
+        const userEmail = localStorage.getItem('user_email');
+
+        if (!userEmail) {
+          console.warn('No user email found in localStorage');
           return null;
         }
 
         const { data, error } = await supabase
           .from('customer')
           .select('*')
-          .eq('email', firebaseUser.email)
-          .single();
+          .eq('email', userEmail)
+          .maybeSingle();
 
         if (error) {
-          if (error.code === 'PGRST116') {
-            // User not found in customer table, create new record
-            return await this.createCustomerFromAuth(firebaseUser);
-          }
           throw error;
+        }
+
+        if (!data) {
+          console.warn('Customer not found for email:', userEmail);
+          return null;
         }
 
         return data;
