@@ -38,6 +38,7 @@ export default function GeneralFeedbackStep({
   initialAnswers
 }: GeneralFeedbackStepProps) {
   const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [showValidation, setShowValidation] = useState(false);
 
   useEffect(() => {
     if (initialAnswers) {
@@ -54,13 +55,18 @@ export default function GeneralFeedbackStep({
   };
 
   const handleSubmit = () => {
+    if (!isComplete) {
+      setShowValidation(true);
+      return;
+    }
+
     const answersWithDetails = questions.map(q => ({
       question_id: q.id,
       question_text: q.question_text,
       question_type: q.question_type,
       answer: answers[q.id]
     }));
-    
+
     onComplete({ answers: answersWithDetails });
   };
 
@@ -99,6 +105,7 @@ export default function GeneralFeedbackStep({
                   value={answers[question.id]}
                   onChange={(value) => handleAnswerChange(question.id, value)}
                   editionName={editionName}
+                  showValidation={showValidation}
                 />
               </div>
             ))}
@@ -113,7 +120,7 @@ export default function GeneralFeedbackStep({
               <ChevronLeft className="w-5 h-5 mr-1" />
               Voltar
             </Button>
-            <Button onClick={handleSubmit} disabled={!isComplete} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-base py-3 rounded-full shadow-md hover:shadow-lg disabled:shadow-none disabled:bg-muted">
+            <Button onClick={handleSubmit} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-base py-3 rounded-full shadow-md hover:shadow-lg">
               {isFinalStep ? 'Finalizar Feedback' : 'Continuar'}
               {isFinalStep ? <Sparkles className="w-5 h-5 ml-2" /> : <ChevronRight className="w-5 h-5 ml-1" />}
             </Button>

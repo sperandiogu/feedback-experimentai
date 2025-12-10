@@ -65,6 +65,7 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
   const [step, setStep] = useState<Step>('welcome');
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [generalQuestions, setGeneralQuestions] = useState<Record<string, Question[]>>({});
+  const [productQuestionsCache, setProductQuestionsCache] = useState<Record<string, Question[]>>({});
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<any>({
     product_feedbacks: [],
@@ -94,6 +95,26 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
     };
     loadQuestions();
   }, []);
+
+  useEffect(() => {
+    const prefetchNextProductQuestions = async () => {
+      if (step === 'products' && currentProductIndex < edition.products.length - 1) {
+        const nextProduct = edition.products[currentProductIndex + 1];
+        if (nextProduct && !productQuestionsCache[nextProduct.id]) {
+          try {
+            const questions = await QuestionsService.getQuestionsByCategoryAndProduct('product', nextProduct.id);
+            setProductQuestionsCache(prev => ({
+              ...prev,
+              [nextProduct.id]: questions
+            }));
+          } catch (error) {
+            console.error(`Error pre-fetching questions for product ${nextProduct.name}:`, error);
+          }
+        }
+      }
+    };
+    prefetchNextProductQuestions();
+  }, [step, currentProductIndex, edition.products, productQuestionsCache]);
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -215,6 +236,7 @@ export default function FeedbackFlow({ edition, onComplete, onExit, onLogout }: 
                 onBack={handleBack}
                 canGoBack={canGoBack}
                 initialAnswers={feedback.product_feedbacks[currentProductIndex]?.answers}
+                cachedQuestions={productQuestionsCache[edition.products[currentProductIndex].id]}
               />
             )}
 

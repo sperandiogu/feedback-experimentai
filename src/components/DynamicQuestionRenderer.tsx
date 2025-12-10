@@ -2,7 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, Heart } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Star, Heart, Sparkles } from 'lucide-react';
 import type { Question } from '@/entities/Questions';
 
 interface DynamicQuestionRendererProps {
@@ -10,13 +11,15 @@ interface DynamicQuestionRendererProps {
   value: any;
   onChange: (value: any) => void;
   editionName?: string;
+  showValidation?: boolean;
 }
 
-export default function DynamicQuestionRenderer({ 
-  question, 
-  value, 
-  onChange, 
-  editionName 
+export default function DynamicQuestionRenderer({
+  question,
+  value,
+  onChange,
+  editionName,
+  showValidation = false
 }: DynamicQuestionRendererProps) {
   const renderEmojiRating = () => {
     const emojis = question.config.emojis || [];
@@ -146,15 +149,24 @@ export default function DynamicQuestionRenderer({
   const renderText = () => {
     const placeholder = question.config.placeholder || 'Digite sua resposta...';
     const rows = question.config.rows || 2;
-    
+    const isEmpty = !value || value.trim() === '';
+    const showError = showValidation && question.is_required && isEmpty;
+
     return (
-      <Textarea
-        placeholder={placeholder}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        className="text-sm rounded-xl border-input"
-        rows={rows}
-      />
+      <div>
+        <Textarea
+          placeholder={placeholder}
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          className={`text-sm rounded-xl border-input ${
+            showError ? 'border-destructive focus-visible:ring-destructive' : ''
+          }`}
+          rows={rows}
+        />
+        {showError && (
+          <p className="text-xs text-destructive mt-1">Este campo é obrigatório</p>
+        )}
+      </div>
     );
   };
 
@@ -167,10 +179,24 @@ export default function DynamicQuestionRenderer({
 
   return (
     <div>
-      <p className="font-semibold mb-3 text-center text-base">
-        {getQuestionText()}
-      </p>
-      
+      <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
+        <p className="font-semibold text-center text-base">
+          {getQuestionText()}
+          {question.is_required && (
+            <span className="text-destructive ml-1">*</span>
+          )}
+        </p>
+        {question.product_id && (
+          <Badge
+            variant="secondary"
+            className="bg-accent/20 text-accent border-none text-xs flex items-center gap-1"
+          >
+            <Sparkles className="w-3 h-3" />
+            Personalizada
+          </Badge>
+        )}
+      </div>
+
       {question.question_type === 'emoji_rating' && renderEmojiRating()}
       {question.question_type === 'rating' && renderRating()}
       {question.question_type === 'multiple_choice' && renderMultipleChoice()}
