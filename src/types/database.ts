@@ -13,6 +13,7 @@ export interface Customer {
 export interface Edition {
   edition_id: string;
   edition: string;
+  is_delivered?: boolean;
   created_at?: string;
   updated_at?: string;
 }

@@ -8,7 +8,6 @@ import CompletionBadge from '../components/CompletionBadge';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Package, AlertCircle } from 'lucide-react';
-import { checkDatabaseConnection } from '@/lib/supabase';
 import type { Customer, EditionWithProducts } from '@/types/database';
 
 export default function FeedbackPage() {
@@ -30,8 +29,7 @@ export default function FeedbackPage() {
     try {
       setLoading(true);
       setError('');
-      
-      // Get current user first (for email verification)
+
       let userEmail: string | null = null;
       try {
         const user = await User.me();
@@ -42,51 +40,46 @@ export default function FeedbackPage() {
         setCurrentUser(null);
       }
 
-      // Load current edition
-      let currentEditionData: EditionWithProducts | null = null;
-      try {
-        const editions = await EditionService.list('-created_at', 1);
-        if (editions.length > 0) {
-          currentEditionData = editions[0];
-          setCurrentEdition(currentEditionData);
-          setDbConnected(true);
-        } else {
-          setError('Nenhuma edição encontrada para avaliação no momento.');
+      if (!userEmail) {
+        console.warn('Anonymous user detected - cannot determine unanswered editions');
+        try {
+          const editions = await EditionService.list('-created_at', 1);
+          if (editions.length > 0) {
+            setCurrentEdition(editions[0]);
+            setDbConnected(true);
+          } else {
+            setError('Nenhuma edição encontrada para avaliação no momento.');
+          }
+        } catch (error) {
+          console.error('Error loading editions:', error);
+          setError('Erro ao carregar edições. Verifique sua conexão com o banco de dados.');
           setDbConnected(false);
-          return;
         }
-      } catch (error) {
-        console.error('Error loading editions:', error);
-        setError('Erro ao carregar edições. Verifique sua conexão com o banco de dados.');
-        setDbConnected(false);
         return;
       }
 
-      // CRITICAL: Check if feedback already exists BEFORE showing any questions
-      if (currentEditionData && userEmail) {
-        console.log(`Checking for existing feedback: edition=${currentEditionData.edition_id}, user=${userEmail}`);
-        try {
-          const hasSubmitted = await Feedback.hasUserSubmittedFeedback(
-            currentEditionData.edition_id, 
-            userEmail
-          );
-          
-          console.log(`User ${userEmail} ${hasSubmitted ? 'HAS ALREADY' : 'has NOT'} submitted feedback for edition ${currentEditionData.edition}`);
-          setAlreadySubmitted(hasSubmitted);
-          
-          if (hasSubmitted) {
-            console.log('Blocking access: User already submitted feedback for this edition');
-            return; // Stop here - don't load anything else
+      try {
+        const pendingEdition = await EditionService.getOldestUnansweredEdition(userEmail);
+        setDbConnected(true);
+
+        if (!pendingEdition) {
+          setAlreadySubmitted(true);
+          try {
+            const editions = await EditionService.list('-created_at', 1);
+            if (editions.length > 0) {
+              setCurrentEdition(editions[0]);
+            }
+          } catch {
+            // not critical
           }
-        } catch (error) {
-          console.error('Error checking existing feedback:', error);
-          setError('Erro ao verificar se você já enviou feedback para esta edição. Por segurança, não é possível continuar.');
-          return; // Fail safe - don't allow if we can't verify
+          return;
         }
-      } else if (currentEditionData && !userEmail) {
-        // For anonymous users, we could implement IP-based checking or other methods
-        console.warn('Anonymous user detected - cannot check for existing feedback by email');
-        // For now, allow anonymous users to proceed, but this could be adjusted based on requirements
+
+        setCurrentEdition(pendingEdition);
+      } catch (error) {
+        console.error('Error loading edition:', error);
+        setError('Erro ao carregar edições. Verifique sua conexão com o banco de dados.');
+        setDbConnected(false);
       }
 
     } catch (err) {
@@ -199,11 +192,10 @@ export default function FeedbackPage() {
       <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
         <span className="text-secondary-foreground text-lg font-bold">✓</span>
       </div>,
-      "Feedback já enviado!",
-      `Obrigado! Você já enviou seu feedback para a edição "${currentEdition?.edition}". Cada pessoa pode avaliar apenas uma vez por mês para garantir a qualidade dos dados.`,
+      "Tudo respondido!",
+      "Obrigado! Voce ja avaliou todas as edicoes disponiveis. Quando uma nova edicao for entregue, ela aparecera aqui para voce avaliar.",
       "Ir para o site principal",
       () => {
-        // Redirect to main website
         window.location.href = 'https://experimentai.com.br';
       }
     );

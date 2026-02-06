@@ -52,6 +52,71 @@ export class EditionService {
     }
   }
 
+  static async getOldestUnansweredEdition(userEmail: string): Promise<EditionWithProducts | null> {
+    try {
+      return await withRetry(async () => {
+        const { data: editions, error: editionsError } = await supabase
+          .from('edition')
+          .select(`
+            *,
+            product_edition!inner(
+              products!inner(*)
+            )
+          `)
+          .eq('is_delivered', true)
+          .order('created_at', { ascending: true });
+
+        if (editionsError) {
+          throw new Error(`Database error: ${editionsError.message}`);
+        }
+
+        if (!editions || editions.length === 0) {
+          return null;
+        }
+
+        const { data: submittedSessions, error: sessionsError } = await supabase
+          .from('feedback_sessions')
+          .select('edition_id')
+          .eq('user_email', userEmail)
+          .eq('session_status', 'completed');
+
+        if (sessionsError) {
+          throw new Error(`Database error: ${sessionsError.message}`);
+        }
+
+        const answeredEditionIds = new Set(
+          (submittedSessions || []).map(s => s.edition_id)
+        );
+
+        const unanswered = editions.find(e => !answeredEditionIds.has(e.edition_id));
+
+        if (!unanswered) {
+          return null;
+        }
+
+        return {
+          edition_id: unanswered.edition_id,
+          edition: unanswered.edition,
+          is_delivered: unanswered.is_delivered,
+          created_at: unanswered.created_at,
+          updated_at: unanswered.updated_at,
+          products: unanswered.product_edition.map((pe: any) => ({
+            id: pe.products.id,
+            name: pe.products.name,
+            brand: pe.products.brand,
+            category: pe.products.category,
+            description: pe.products.description,
+            image_url: pe.products.image_url,
+            created_at: pe.products.created_at
+          }))
+        };
+      });
+    } catch (error) {
+      console.error('Failed to fetch oldest unanswered edition:', error);
+      throw error;
+    }
+  }
+
   static async getById(id: string): Promise<EditionWithProducts | null> {
     try {
       return await withRetry(async () => {
