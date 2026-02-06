@@ -55,6 +55,40 @@ export class EditionService {
   static async getOldestUnansweredEdition(userEmail: string): Promise<EditionWithProducts | null> {
     try {
       return await withRetry(async () => {
+        const { data: customer, error: customerError } = await supabase
+          .from('customer')
+          .select('customer_id')
+          .eq('email', userEmail)
+          .maybeSingle();
+
+        if (customerError) {
+          throw new Error(`Database error: ${customerError.message}`);
+        }
+
+        if (!customer) {
+          return null;
+        }
+
+        const { data: deliveredOrders, error: ordersError } = await supabase
+          .from('order')
+          .select('edition_id')
+          .eq('customer_id', customer.customer_id)
+          .eq('status', 'delivered');
+
+        if (ordersError) {
+          throw new Error(`Database error: ${ordersError.message}`);
+        }
+
+        if (!deliveredOrders || deliveredOrders.length === 0) {
+          return null;
+        }
+
+        const deliveredEditionIds = deliveredOrders.map(o => o.edition_id).filter(Boolean);
+
+        if (deliveredEditionIds.length === 0) {
+          return null;
+        }
+
         const { data: editions, error: editionsError } = await supabase
           .from('edition')
           .select(`
@@ -63,7 +97,7 @@ export class EditionService {
               products!inner(*)
             )
           `)
-          .eq('is_delivered', true)
+          .in('edition_id', deliveredEditionIds)
           .order('created_at', { ascending: true });
 
         if (editionsError) {
@@ -97,7 +131,6 @@ export class EditionService {
         return {
           edition_id: unanswered.edition_id,
           edition: unanswered.edition,
-          is_delivered: unanswered.is_delivered,
           created_at: unanswered.created_at,
           updated_at: unanswered.updated_at,
           products: unanswered.product_edition.map((pe: any) => ({
