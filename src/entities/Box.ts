@@ -98,7 +98,7 @@ export class EditionService {
             )
           `)
           .in('edition_id', deliveredEditionIds)
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: false });
 
         if (editionsError) {
           throw new Error(`Database error: ${editionsError.message}`);

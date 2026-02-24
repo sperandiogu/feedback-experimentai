@@ -1,9 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Star, Heart, Sparkles } from 'lucide-react';
+import { Star, Heart } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Question } from '@/entities/Questions';
 
 interface DynamicQuestionRendererProps {
@@ -12,6 +11,9 @@ interface DynamicQuestionRendererProps {
   onChange: (value: any) => void;
   editionName?: string;
   showValidation?: boolean;
+  error?: string;
+  touched?: boolean;
+  onBlur?: () => void;
 }
 
 export default function DynamicQuestionRenderer({
@@ -19,27 +21,38 @@ export default function DynamicQuestionRenderer({
   value,
   onChange,
   editionName,
-  showValidation = false
+  showValidation = false,
+  error,
+  touched = false,
+  onBlur
 }: DynamicQuestionRendererProps) {
+  function hasValue(val: any): boolean {
+    if (val === undefined || val === null) return false;
+    if (typeof val === 'string') return val.trim() !== '';
+    if (Array.isArray(val)) return val.length > 0;
+    return true;
+  }
+
+  const showError = (touched && error) || (showValidation && question.is_required && !hasValue(value));
+
   const renderEmojiRating = () => {
     const emojis = question.config.emojis || [];
-    
+
     return (
-      <div className="flex justify-center gap-3">
+      <div className="flex justify-start gap-2">
         {emojis.map((item: any) => (
-          <motion.button
+          <button
             key={item.value}
             onClick={() => onChange(item.value)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`p-3 w-14 h-14 flex items-center justify-center rounded-full transition-all duration-200 ${
+            className={cn(
+              "w-10 h-10 flex items-center justify-center rounded-full transition-all",
               value === item.value
-                ? 'bg-primary text-primary-foreground transform scale-110 shadow-lg'
-                : 'bg-muted hover:bg-muted/90'
-            }`}
+                ? "ring-2 ring-primary/50 bg-primary/5"
+                : "hover:bg-muted/50"
+            )}
           >
-            <span className="text-2xl">{item.emoji}</span>
-          </motion.button>
+            <span className="text-xl">{item.emoji}</span>
+          </button>
         ))}
       </div>
     );
@@ -50,25 +63,24 @@ export default function DynamicQuestionRenderer({
     const max = question.config.max || 5;
     const icon = question.config.icon || 'star';
     const IconComponent = icon === 'heart' ? Heart : Star;
-    
+
     return (
-      <div className="flex justify-center gap-1">
+      <div className="flex justify-start gap-0.5">
         {Array.from({ length: max - min + 1 }, (_, i) => min + i).map((rating) => (
-          <motion.button 
-            key={rating} 
-            onClick={() => onChange(rating)} 
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="p-1"
+          <button
+            key={rating}
+            onClick={() => onChange(rating)}
+            className="p-0.5 transition-colors"
           >
-            <IconComponent 
-              className={`w-8 h-8 transition-colors ${
-                rating <= value 
-                  ? 'fill-accent text-accent' 
-                  : 'text-border'
-              }`} 
+            <IconComponent
+              className={cn(
+                "w-6 h-6 transition-colors",
+                rating <= value
+                  ? "fill-accent text-accent"
+                  : "fill-transparent text-muted-foreground/30"
+              )}
             />
-          </motion.button>
+          </button>
         ))}
       </div>
     );
@@ -76,37 +88,46 @@ export default function DynamicQuestionRenderer({
 
   const renderMultipleChoice = () => {
     const options = question.options || [];
-    const isGrid = options.length > 4;
-    
+    const isMultiSelect = question.config.multiSelect === true;
+
+    const handleClick = (optionValue: string) => {
+      if (isMultiSelect) {
+        const currentValues = Array.isArray(value) ? value : [];
+        if (currentValues.includes(optionValue)) {
+          onChange(currentValues.filter((v: string) => v !== optionValue));
+        } else {
+          onChange([...currentValues, optionValue]);
+        }
+      } else {
+        onChange(optionValue);
+      }
+    };
+
+    const isSelected = (optionValue: string) => {
+      if (isMultiSelect) {
+        return Array.isArray(value) && value.includes(optionValue);
+      }
+      return value === optionValue;
+    };
+
     return (
-      <div className={isGrid ? "grid grid-cols-2 gap-3" : "flex flex-col sm:flex-row gap-2"}>
+      <div className="flex flex-col gap-2">
         {options.map((option) => (
-          <motion.button
+          <button
             key={option.option_value}
-            onClick={() => onChange(option.option_value)}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className={`${
-              isGrid 
-                ? `p-3 rounded-xl transition-all duration-200 flex flex-col items-center gap-1 ${
-                    value === option.option_value
-                      ? 'bg-primary text-primary-foreground transform scale-105 shadow-lg'
-                      : 'bg-muted hover:bg-muted/90'
-                  }`
-                : `flex-1 text-base py-3 sm:py-2 rounded-full ${
-                    value === option.option_value
-                      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                      : 'bg-background border text-foreground/80 hover:bg-muted'
-                  }`
-            }`}
-          >
-            {option.option_icon && isGrid && (
-              <span className="text-xl">{option.option_icon}</span>
+            onClick={() => handleClick(option.option_value)}
+            className={cn(
+              "w-full text-left py-2 px-3 text-sm rounded-lg border transition-colors",
+              isSelected(option.option_value)
+                ? "border-primary bg-primary/5 text-foreground"
+                : "border-border hover:border-muted-foreground/50"
             )}
-            <span className={isGrid ? "text-sm font-medium" : ""}>
-              {option.option_label}
-            </span>
-          </motion.button>
+          >
+            {option.option_icon && (
+              <span className="mr-2">{option.option_icon}</span>
+            )}
+            {option.option_label}
+          </button>
         ))}
       </div>
     );
@@ -115,33 +136,31 @@ export default function DynamicQuestionRenderer({
   const renderBoolean = () => {
     const trueLabel = question.config.true_label || 'Sim';
     const falseLabel = question.config.false_label || 'Não';
-    
+
     return (
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Button
-          asChild
+      <div className="flex gap-2">
+        <button
           onClick={() => onChange(true)}
-          variant={value === true ? "default" : "outline"}
-          className={`flex-1 text-base py-3 rounded-full ${
+          className={cn(
+            "flex-1 py-2 text-sm rounded-lg border transition-colors",
             value === true
-              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'bg-background border text-foreground/80 hover:bg-muted'
-          }`}
+              ? "border-primary bg-primary/5 text-primary"
+              : "border-border hover:border-muted-foreground/50"
+          )}
         >
-          <motion.div whileTap={{ scale: 0.95 }}>{trueLabel}</motion.div>
-        </Button>
-        <Button
-          asChild
+          {trueLabel}
+        </button>
+        <button
           onClick={() => onChange(false)}
-          variant={value === false ? "default" : "outline"}
-          className={`flex-1 text-base py-3 rounded-full ${
+          className={cn(
+            "flex-1 py-2 text-sm rounded-lg border transition-colors",
             value === false
-              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'bg-background border text-foreground/80 hover:bg-muted'
-          }`}
+              ? "border-primary bg-primary/5 text-primary"
+              : "border-border hover:border-muted-foreground/50"
+          )}
         >
-          <motion.div whileTap={{ scale: 0.95 }}>{falseLabel}</motion.div>
-        </Button>
+          {falseLabel}
+        </button>
       </div>
     );
   };
@@ -150,7 +169,7 @@ export default function DynamicQuestionRenderer({
     const placeholder = question.config.placeholder || 'Digite sua resposta...';
     const rows = question.config.rows || 2;
     const isEmpty = !value || value.trim() === '';
-    const showError = showValidation && question.is_required && isEmpty;
+    const localShowError = (touched && error) || (showValidation && question.is_required && isEmpty);
 
     return (
       <div>
@@ -158,13 +177,17 @@ export default function DynamicQuestionRenderer({
           placeholder={placeholder}
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          className={`text-sm rounded-xl border-input ${
-            showError ? 'border-destructive focus-visible:ring-destructive' : ''
-          }`}
+          onBlur={onBlur}
+          className={cn(
+            "text-sm rounded-lg border-border",
+            localShowError && "border-destructive/50"
+          )}
           rows={rows}
         />
-        {showError && (
-          <p className="text-xs text-destructive mt-1">Este campo é obrigatório</p>
+        {localShowError && (
+          <p className="text-xs text-destructive/80 mt-1">
+            {error || 'Este campo é obrigatório'}
+          </p>
         )}
       </div>
     );
@@ -178,30 +201,28 @@ export default function DynamicQuestionRenderer({
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
-        <p className="font-semibold text-center text-base">
-          {getQuestionText()}
-          {question.is_required && (
-            <span className="text-destructive ml-1">*</span>
-          )}
-        </p>
-        {question.product_id && (
-          <Badge
-            variant="secondary"
-            className="bg-accent/20 text-accent border-none text-xs flex items-center gap-1"
-          >
-            <Sparkles className="w-3 h-3" />
-            Personalizada
-          </Badge>
+    <div className="space-y-2">
+      <p className={cn(
+        "text-sm font-medium text-left text-foreground/80",
+        showError && "text-destructive/80"
+      )}>
+        {getQuestionText()}
+        {question.is_required && (
+          <span className="text-destructive/70 ml-0.5">*</span>
         )}
-      </div>
+      </p>
 
       {question.question_type === 'emoji_rating' && renderEmojiRating()}
       {question.question_type === 'rating' && renderRating()}
       {question.question_type === 'multiple_choice' && renderMultipleChoice()}
       {question.question_type === 'boolean' && renderBoolean()}
       {question.question_type === 'text' && renderText()}
+
+      {showError && question.question_type !== 'text' && (
+        <p className="text-xs text-destructive/80 mt-1">
+          {error || 'Selecione uma opção'}
+        </p>
+      )}
     </div>
   );
 }
