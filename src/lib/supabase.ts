@@ -21,11 +21,19 @@ if (!supabaseAnonKey) {
   throw new Error('VITE_SUPABASE_ANON_KEY environment variable is required');
 }
 
+// Safe storage that works in cross-origin iframes where localStorage is blocked
+const safeStorage = {
+  getItem: (key: string) => { try { return localStorage.getItem(key); } catch { return null; } },
+  setItem: (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* iframe */ } },
+  removeItem: (key: string) => { try { localStorage.removeItem(key); } catch { /* iframe */ } },
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false
+    detectSessionInUrl: false,
+    storage: safeStorage,
   },
   db: {
     schema: 'public'
