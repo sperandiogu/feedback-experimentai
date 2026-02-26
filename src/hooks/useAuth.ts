@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
+const safeGetItem = (key: string): string | null => {
+  try { return localStorage.getItem(key); } catch { return null; }
+};
+
+const safeSetItem = (key: string, value: string) => {
+  try { localStorage.setItem(key, value); } catch { /* iframe context */ }
+};
+
+const safeRemoveItem = (key: string) => {
+  try { localStorage.removeItem(key); } catch { /* iframe context */ }
+};
+
 export const useAuth = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
@@ -10,7 +22,7 @@ export const useAuth = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const emailFromUrl = params.get('email');
-    const storedEmail = localStorage.getItem('user_email');
+    const storedEmail = safeGetItem('user_email');
 
     if (emailFromUrl) {
       validateEmail(emailFromUrl);
@@ -37,7 +49,7 @@ export const useAuth = () => {
         setError('Erro ao validar email. Tente novamente.');
         setIsAuthorized(false);
         setUserEmail(null);
-        localStorage.removeItem('user_email');
+        safeRemoveItem('user_email');
         return;
       }
 
@@ -45,20 +57,20 @@ export const useAuth = () => {
         setError('Email não encontrado. Você precisa ter uma assinatura ativa para acessar.');
         setIsAuthorized(false);
         setUserEmail(null);
-        localStorage.removeItem('user_email');
+        safeRemoveItem('user_email');
         return;
       }
 
       setUserEmail(email);
       setIsAuthorized(true);
       setError('');
-      localStorage.setItem('user_email', email);
+      safeSetItem('user_email', email);
     } catch (err) {
       console.error('Validation error:', err);
       setError('Erro ao verificar assinatura');
       setIsAuthorized(false);
       setUserEmail(null);
-      localStorage.removeItem('user_email');
+      safeRemoveItem('user_email');
     } finally {
       setLoading(false);
     }
@@ -71,7 +83,7 @@ export const useAuth = () => {
   const signOut = async () => {
     try {
       setLoading(true);
-      localStorage.removeItem('user_email');
+      safeRemoveItem('user_email');
       setUserEmail(null);
       setIsAuthorized(false);
       setError('');
