@@ -8,8 +8,13 @@ export const useAuth = () => {
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const emailFromUrl = params.get('email');
     const storedEmail = localStorage.getItem('user_email');
-    if (storedEmail) {
+
+    if (emailFromUrl) {
+      validateEmail(emailFromUrl);
+    } else if (storedEmail) {
       validateEmail(storedEmail);
     } else {
       setLoading(false);

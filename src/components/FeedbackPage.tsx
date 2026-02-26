@@ -3,8 +3,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { User } from '@/entities/User';
 import { EditionService } from '@/entities/Box';
 import { Feedback } from '@/entities/Feedback';
-import FeedbackFlow from '../components/FeedbackFlow';
-import CompletionBadge from '../components/CompletionBadge';
+import FeedbackAccordion from './FeedbackAccordion';
+import CompletionBadge from './CompletionBadge';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Package, AlertCircle } from 'lucide-react';
@@ -203,15 +203,15 @@ export default function FeedbackPage() {
 
   return (
     <>
-      <FeedbackFlow 
+      <FeedbackAccordion
         edition={currentEdition}
         onComplete={handleFeedbackComplete}
         onExit={handleFeedbackExit}
         onLogout={handleLogout}
       />
-      
+
       {showCompletion && (
-        <CompletionBadge 
+        <CompletionBadge
           badge={completionBadge}
           onClose={handleCompletionClose}
         />
