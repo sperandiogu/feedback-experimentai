@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabasePublic } from '../lib/supabase';
 
 const safeGetItem = (key: string): string | null => {
   try { return localStorage.getItem(key); } catch { return null; }
@@ -38,7 +38,7 @@ export const useAuth = () => {
       setLoading(true);
       setError('');
 
-      const { data, error: supabaseError } = await supabase
+      const { data, error: supabaseError } = await supabasePublic
         .from('customer')
         .select('email, customer_id, name')
         .eq('email', email)
