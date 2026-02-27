@@ -42,7 +42,8 @@ export const useAuth = () => {
         .from('customer')
         .select('email, customer_id, name')
         .eq('email', email)
-        .maybeSingle();
+        .limit(1)
+        .single();
 
       if (supabaseError) {
         console.error('Error checking customer:', JSON.stringify(supabaseError, null, 2));
