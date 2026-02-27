@@ -59,7 +59,8 @@ export class EditionService {
           .from('customer')
           .select('customer_id')
           .eq('email', userEmail)
-          .maybeSingle();
+          .limit(1)
+          .single();
 
         if (customerError) {
           throw new Error(`Database error: ${customerError.message}`);

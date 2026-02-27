@@ -18,7 +18,8 @@ export class User {
           .from('customer')
           .select('*')
           .eq('email', userEmail)
-          .maybeSingle();
+          .limit(1)
+          .single();
 
         if (error) {
           throw error;
