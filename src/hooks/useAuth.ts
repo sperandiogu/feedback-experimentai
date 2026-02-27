@@ -45,7 +45,7 @@ export const useAuth = () => {
         .maybeSingle();
 
       if (supabaseError) {
-        console.error('Error checking customer:', supabaseError);
+        console.error('Error checking customer:', JSON.stringify(supabaseError, null, 2));
         setError('Erro ao validar email. Tente novamente.');
         setIsAuthorized(false);
         setUserEmail(null);
